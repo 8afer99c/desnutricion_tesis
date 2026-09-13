@@ -112,13 +112,17 @@ def construir_filas(m):
 
     if "train" in m:
         tr = m["train"]
+        max_depth = m.get("hiperparametros_modelo", {}).get("max_depth")
+        contexto_regularizacion = (
+            "bosque sin profundidad máxima" if max_depth is None
+            else f"bosque con profundidad máxima={max_depth}"
+        )
         filas.append((
             "Brecha train vs test",
             f"balanced accuracy train={tr['accuracy_balanced']:.4f} vs "
             f"test={m['accuracy_balanced']:.4f}; "
             f"PR-AUC train={tr['pr_auc']:.4f} vs test={m['pr_auc']:.4f} "
-            "(el modelo memoriza train: sobreajuste esperado en un bosque sin "
-            "profundidad máxima, reportado de forma explícita)"
+            f"({contexto_regularizacion}, reportado de forma explícita)"
         ))
 
     return filas
