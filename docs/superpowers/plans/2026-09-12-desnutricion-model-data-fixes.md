@@ -628,6 +628,7 @@ Diferencias frente a ENTRENAMIENTO.ipynb:
 import json
 
 import joblib
+import numpy as np
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.impute import SimpleImputer
@@ -636,7 +637,7 @@ from sklearn.metrics import (
     average_precision_score, balanced_accuracy_score, classification_report,
     confusion_matrix, f1_score, precision_score, recall_score, roc_auc_score,
 )
-from sklearn.model_selection import RandomizedSearchCV, StratifiedKFold
+from sklearn.model_selection import RandomizedSearchCV, StratifiedKFold, cross_val_predict
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.tree import DecisionTreeClassifier
@@ -682,10 +683,33 @@ def candidate_models(scale_pos_weight: float) -> dict:
     }
 
 
-def evaluate(pipeline, X_test, y_test) -> dict:
-    y_pred = pipeline.predict(X_test)
+def find_best_threshold(pipeline, X_train, y_train, cv=5) -> float:
+    """
+    El umbral 0.5 por defecto de .predict() no está calibrado para un
+    problema con ~25% de positivos: un modelo con buen poder de ranking
+    (PR-AUC/ROC-AUC decentes) puede terminar sin superar 0.5 en casi ningún
+    caso real, colapsando el recall de la clase positiva a casi 0 aunque el
+    modelo "sepa" ordenar bien los casos. Se busca el umbral que maximiza
+    F1 de la clase 1 usando predicciones out-of-fold sobre TRAIN (nunca
+    sobre test, para no contaminar la evaluación final).
+    """
+    probas_oof = cross_val_predict(
+        pipeline, X_train, y_train, cv=cv, method="predict_proba", n_jobs=-1
+    )[:, 1]
+    mejor_umbral, mejor_f1 = 0.5, -1.0
+    for umbral in np.arange(0.05, 0.95, 0.01):
+        preds = (probas_oof >= umbral).astype(int)
+        f1 = f1_score(y_train, preds, pos_label=1, zero_division=0)
+        if f1 > mejor_f1:
+            mejor_umbral, mejor_f1 = float(umbral), f1
+    return mejor_umbral
+
+
+def evaluate(pipeline, X_test, y_test, umbral: float = 0.5) -> dict:
     y_proba = pipeline.predict_proba(X_test)[:, 1]
+    y_pred = (y_proba >= umbral).astype(int)
     return {
+        "umbral_usado": umbral,
         "accuracy_balanced": balanced_accuracy_score(y_test, y_pred),
         "precision_clase_1": precision_score(y_test, y_pred, pos_label=1),
         "recall_clase_1": recall_score(y_test, y_pred, pos_label=1),
@@ -755,7 +779,10 @@ def run():
             "se usa tal cual salió de la comparación base."
         )
 
-    metricas = evaluate(pipeline_final, X_test, y_test)
+    umbral_optimo = find_best_threshold(pipeline_final, X_train, y_train)
+    print(f"Umbral óptimo (maximiza F1 clase 1, CV sobre train): {umbral_optimo:.2f}")
+
+    metricas = evaluate(pipeline_final, X_test, y_test, umbral=umbral_optimo)
     metricas["modelo_ganador"] = nombre_ganador
     metricas["comparativa_base"] = dict(resultados)
 
@@ -861,6 +888,13 @@ si promover v2. Aviso: v1 pudo haber visto durante su propio entrenamiento
 algunas de las filas que ahora están en test_v2 (su split original era
 distinto) -- esta comparación es generosa con v1, no perfectamente
 controlada, pero sirve como verificación de sensatez antes del cutover.
+
+Cada modelo se evalúa en SU PROPIO umbral de decisión operativo: v1 nunca
+tuvo un umbral ajustado (siempre usó el 0.5 por defecto de .predict(), tanto
+en producción como en su entrenamiento original), así que se evalúa así.
+v2 sí tiene un umbral ajustado (guardado en metricas_v2.json como
+"umbral_usado", ver Task 7) -- compararlo a 0.5 sería injusto y no reflejaría
+cómo v2 realmente se usaría.
 """
 import json
 
@@ -874,10 +908,11 @@ from sklearn.metrics import (
 from pipeline_v2.paths import OUTPUT_DIR, TARGET_COL, V1_MODEL_PATH
 
 
-def score_model(pipeline, X, y):
-    y_pred = pipeline.predict(X)
+def score_model(pipeline, X, y, umbral: float = 0.5):
     y_proba = pipeline.predict_proba(X)[:, 1]
+    y_pred = (y_proba >= umbral).astype(int)
     return {
+        "umbral_usado": umbral,
         "balanced_accuracy": balanced_accuracy_score(y, y_pred),
         "recall_clase_1": recall_score(y, y_pred, pos_label=1),
         "precision_clase_1": precision_score(y, y_pred, pos_label=1),
@@ -892,15 +927,18 @@ def run():
     y = test_df[TARGET_COL]
     X = test_df.drop(columns=[TARGET_COL])
 
+    with open(OUTPUT_DIR / "metricas_v2.json", encoding="utf-8") as f:
+        umbral_v2 = json.load(f)["umbral_usado"]
+
     v1 = joblib.load(V1_MODEL_PATH)
     v2 = joblib.load(OUTPUT_DIR / "modelo_v2.joblib")
 
-    v1_scores = score_model(v1, X[v1.feature_names_in_.tolist()], y)
-    v2_scores = score_model(v2, X, y)
+    v1_scores = score_model(v1, X[v1.feature_names_in_.tolist()], y, umbral=0.5)
+    v2_scores = score_model(v2, X, y, umbral=umbral_v2)
 
-    print(f"{'Métrica':<22}{'v1 (actual)':<15}{'v2 (corregido)':<15}")
+    print(f"{'Métrica':<22}{'v1 (actual, umbral 0.5)':<26}{'v2 (corregido, umbral '+f'{umbral_v2:.2f})':<26}")
     for k in v1_scores:
-        print(f"{k:<22}{v1_scores[k]:<15.4f}{v2_scores[k]:<15.4f}")
+        print(f"{k:<22}{str(v1_scores[k]):<26}{str(v2_scores[k]):<26}")
 
     with open(OUTPUT_DIR / "comparacion_v1_v2.json", "w", encoding="utf-8") as f:
         json.dump({"v1": v1_scores, "v2": v2_scores}, f, indent=2)
