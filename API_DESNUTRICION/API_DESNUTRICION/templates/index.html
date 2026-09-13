@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>
+Sistema Predictivo de Desnutrición Crónica
+</title>
+
+
+<link 
+href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+rel="stylesheet">
+
+
+<link 
+rel="stylesheet"
+href="/static/css/style.css">
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+</head>
+
+
+<body>
+
+
+<div class="layout">
+
+
+<!-- MENU -->
+
+<aside class="menu">
+
+
+<h3>
+Desnutrición
+</h3>
+
+
+<p>
+Sistema ML
+</p>
+
+
+<hr>
+
+
+<button onclick="mostrarModulo('inicio')">
+🏠 Inicio
+</button>
+
+
+<button onclick="mostrarModulo('individual')">
+👤 Predicción individual
+</button>
+
+
+<button onclick="mostrarModulo('masiva')">
+📂 Predicción masiva
+</button>
+
+
+<button onclick="mostrarModulo('dashboard')">
+📊 Dashboard
+</button>
+
+
+<button onclick="mostrarModulo('metricas')">
+📈 Métricas
+</button>
+
+
+<button onclick="mostrarModulo('variables')">
+🔍 Variables importantes
+</button>
+
+
+<button onclick="mostrarModulo('recomendaciones')">
+💡 Recomendaciones
+</button>
+
+
+</aside>
+
+
+
+
+<!-- CONTENIDO -->
+
+
+<main class="contenido">
+
+
+
+<!-- INICIO -->
+
+
+<section id="inicio" class="modulo">
+
+
+<div class="card sombra">
+
+
+<h1>
+Sistema Predictivo de Desnutrición Crónica
+</h1>
+
+
+<p>
+
+Aplicación web para la predicción del estado nutricional infantil mediante modelos de Machine Learning.
+
+</p>
+
+
+<p>
+
+Modelo utilizado:
+<b>XGBoost</b>
+
+</p>
+
+
+</div>
+
+<hr class="mt-5">
+
+
+<div class="mt-5">
+
+<h3>
+¿Qué es la desnutrición crónica infantil?
+</h3>
+
+
+<p>
+
+La desnutrición crónica infantil es una condición asociada a un retraso
+en el crecimiento físico del niño como consecuencia de deficiencias
+nutricionales prolongadas, enfermedades recurrentes, condiciones sociales
+desfavorables y limitaciones en el acceso a servicios de salud.
+
+</p>
+
+
+<p>
+
+Esta condición se identifica principalmente mediante indicadores
+antropométricos como la relación talla para la edad, permitiendo conocer
+si el crecimiento del niño se encuentra acorde con los parámetros
+esperados para su edad.
+
+</p>
+
+
+<p>
+
+La detección temprana es fundamental debido a que la desnutrición durante
+los primeros años de vida puede afectar el desarrollo cognitivo,
+la capacidad de aprendizaje, el sistema inmunológico y la calidad de vida
+del niño.
+
+</p>
+
+
+<p>
+
+El presente sistema utiliza modelos de Machine Learning entrenados con
+datos estructurados de salud infantil para estimar la probabilidad de
+presentar desnutrición crónica y apoyar procesos de vigilancia
+epidemiológica y toma de decisiones.
+
+</p>
+
+
+</div>
+
+</section>
+
+
+
+
+
+<!-- INDIVIDUAL -->
+
+
+<section id="individual" class="modulo oculto">
+
+<div class="card sombra">
+
+<h2>
+Predicción individual
+</h2>
+
+<p>
+Ingrese los datos principales del niño para estimar el riesgo nutricional.
+</p>
+
+
+<form id="formIndividual">
+
+
+<div class="row">
+
+
+<div class="col-md-6">
+
+<label>
+Edad del niño (meses)
+</label>
+
+<input
+type="number"
+class="form-control"
+id="edad_meses"
+value="24">
+
+</div>
+
+
+
+<div class="col-md-6">
+
+<label>
+Sexo
+</label>
+
+<select
+class="form-control"
+id="sexo">
+
+
+<option value="1">
+Masculino
+</option>
+
+
+<option value="0">
+Femenino
+</option>
+
+
+</select>
+
+</div>
+
+
+</div>
+
+
+<br>
+
+
+<div class="row">
+
+
+<div class="col-md-6">
+
+<label>
+Peso al nacer (gramos)
+</label>
+
+<input
+type="number"
+class="form-control"
+id="peso_nacer_gramos"
+value="3000">
+
+
+</div>
+
+
+
+<div class="col-md-6">
+
+<label>
+Talla al nacer (cm)
+</label>
+
+<input
+type="number"
+class="form-control"
+id="talla_nacer_cm"
+value="50">
+
+
+</div>
+
+
+</div>
+
+
+<br>
+
+
+<div class="row">
+
+
+<div class="col-md-6">
+
+<label>
+Prematuro
+</label>
+
+
+<select
+class="form-control"
+id="prematuro">
+
+
+<option value="0">
+No
+</option>
+
+
+<option value="1">
+Sí
+</option>
+
+
+</select>
+
+</div>
+
+
+
+<div class="col-md-6">
+
+<label>
+Lactancia (meses)
+</label>
+
+<input
+type="number"
+class="form-control"
+id="lactancia_meses"
+value="6">
+
+
+</div>
+
+
+</div>
+
+
+<br>
+
+
+<div class="row">
+
+
+<div class="col-md-6">
+
+<label>
+Diarrea últimas 2 semanas
+</label>
+
+
+<select
+class="form-control"
+id="diarrea_ultimas_2_semanas">
+
+
+<option value="0">
+No
+</option>
+
+
+<option value="1">
+Sí
+</option>
+
+
+</select>
+
+</div>
+
+
+
+<div class="col-md-6">
+
+<label>
+Infección respiratoria
+</label>
+
+
+<select
+class="form-control"
+id="infeccion_respiratoria_2_semanas">
+
+
+<option value="0">
+No
+</option>
+
+
+<option value="1">
+Sí
+</option>
+
+
+</select>
+
+</div>
+
+
+</div>
+
+
+
+<br>
+
+
+<button
+class="btn btn-success w-100">
+
+Realizar predicción
+
+</button>
+
+
+</form>
+
+
+<div
+id="resultadoIndividual"
+class="mt-4">
+
+</div>
+
+
+</div>
+
+</section>
+
+
+
+
+
+<!-- MASIVA -->
+
+
+<section id="masiva"
+class="modulo oculto">
+
+
+<div class="card sombra">
+
+
+<h2>
+Predicción masiva
+</h2>
+
+
+<p>
+
+Cargue un archivo con los registros infantiles para que el sistema
+realice la predicción automática del riesgo de desnutrición crónica.
+
+</p>
+
+
+<p>
+
+El archivo debe contener las variables utilizadas durante el entrenamiento
+del modelo Machine Learning.
+
+</p>
+
+
+
+<form id="uploadForm">
+
+
+<label>
+
+Seleccione archivo
+
+</label>
+
+
+<input
+class="form-control"
+type="file"
+id="archivo"
+accept=".csv,.xlsx"
+required>
+
+
+
+<button
+type="submit"
+class="btn btn-primary mt-3 w-100">
+
+
+Analizar archivo
+
+
+</button>
+
+
+</form>
+
+
+
+<div 
+id="estado"
+class="mt-4 text-center">
+
+
+</div>
+
+
+
+
+<div 
+id="resultadoMasivo"
+class="mt-4">
+
+
+</div>
+
+
+
+</div>
+
+
+</section>
+
+
+
+
+
+<!-- DASHBOARD -->
+
+
+<section id="dashboard"
+class="modulo oculto">
+
+
+<div class="card sombra">
+
+
+<h2>
+Dashboard nutricional
+</h2>
+
+
+<p>
+
+Resumen estadístico de la población infantil analizada
+mediante el modelo predictivo de Machine Learning.
+
+</p>
+
+
+
+<div class="row mt-4">
+
+
+<div class="col-md-3">
+
+
+<div class="estadistica">
+
+
+<h5>
+Total evaluados
+</h5>
+
+
+<h3 id="total">
+0
+</h3>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="col-md-3">
+
+
+<div class="estadistica">
+
+
+<h5>
+Casos con desnutrición
+</h5>
+
+
+<h3 id="desnutricion">
+0
+</h3>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="col-md-3">
+
+
+<div class="estadistica">
+
+
+<h5>
+Sin desnutrición
+</h5>
+
+
+<h3 id="sinDesnutricion">
+0
+</h3>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="col-md-3">
+
+
+<div class="estadistica">
+
+
+<h5>
+Porcentaje
+</h5>
+
+
+<h3 id="porcentaje">
+0 %
+</h3>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+
+<hr class="mt-5">
+
+
+<div class="row">
+
+
+<div class="col-md-6">
+
+
+<h4>
+Distribución de casos
+</h4>
+
+
+<canvas id="graficoCasos"></canvas>
+
+
+</div>
+
+
+
+
+<div class="col-md-6">
+
+
+<h4>
+Proporción nutricional
+</h4>
+
+
+<canvas id="graficoPorcentaje"></canvas>
+
+
+</div>
+
+
+</div>
+
+
+
+</div>
+
+
+</section>
+
+
+
+
+
+
+<!-- METRICAS -->
+
+
+<section id="metricas"
+class="modulo oculto">
+
+
+<div class="card sombra">
+
+
+<h2>
+Evaluación del modelo Machine Learning
+</h2>
+
+
+<p>
+
+Las métricas permiten evaluar el desempeño del modelo predictivo
+utilizado para estimar el riesgo de desnutrición crónica infantil.
+
+</p>
+
+
+<p>
+
+El modelo implementado corresponde a un algoritmo
+<b>XGBoost</b>, seleccionado debido a su capacidad para trabajar
+con datos estructurados y relaciones complejas entre variables.
+
+</p>
+
+
+
+<hr>
+
+
+
+<div id="resultadoMetricas">
+
+
+<div class="row">
+
+
+
+<div class="col-md-3">
+
+
+<div class="estadistica">
+
+
+<h5>
+Accuracy
+</h5>
+
+
+<h3 id="accuracy">
+-
+</h3>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="col-md-3">
+
+
+<div class="estadistica">
+
+
+<h5>
+Precision
+</h5>
+
+
+<h3 id="precision">
+-
+</h3>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="col-md-3">
+
+
+<div class="estadistica">
+
+
+<h5>
+Recall
+</h5>
+
+
+<h3 id="recall">
+-
+</h3>
+
+
+</div>
+
+
+</div>
+
+
+
+<div class="col-md-3">
+
+
+<div class="estadistica">
+
+
+<h5>
+F1 Score
+</h5>
+
+
+<h3 id="f1">
+-
+</h3>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+</div>
+
+
+
+<hr>
+
+
+
+<h4>
+Interpretación de resultados
+</h4>
+
+
+
+<p>
+
+<strong>Accuracy:</strong>
+representa la proporción de predicciones correctas realizadas
+por el modelo sobre el conjunto evaluado.
+
+</p>
+
+
+
+<p>
+
+<strong>Precision:</strong>
+indica la capacidad del modelo para identificar correctamente
+los casos positivos de desnutrición evitando falsas detecciones.
+
+</p>
+
+
+
+<p>
+
+<strong>Recall:</strong>
+mide la capacidad del sistema para encontrar la mayor cantidad
+posible de niños que presentan condiciones asociadas a
+desnutrición crónica.
+
+</p>
+
+
+
+<p>
+
+<strong>F1 Score:</strong>
+representa un equilibrio entre precisión y sensibilidad,
+permitiendo evaluar el desempeño general del modelo.
+
+</p>
+
+
+
+</div>
+
+
+</section>
+
+
+
+
+
+
+
+<!-- VARIABLES -->
+
+
+<section id="variables"
+class="modulo oculto">
+
+
+<div class="card sombra">
+
+
+<h2>
+Variables importantes del modelo
+</h2>
+
+
+<p>
+
+El modelo XGBoost permite identificar cuáles variables tienen mayor
+influencia en la predicción de desnutrición crónica infantil.
+
+</p>
+
+
+<p>
+
+Las variables representan factores asociados a características
+del niño, condiciones maternas, controles de salud, alimentación,
+vacunación y factores sociales.
+
+</p>
+
+
+<hr>
+
+
+<canvas id="graficoVariables"></canvas>
+
+
+<hr>
+
+
+<h4>
+Interpretación
+</h4>
+
+
+<p>
+
+Las variables con mayor importancia corresponden a aquellas que
+generan una mayor contribución en las decisiones internas del modelo.
+Esto permite conocer qué características tienen mayor relación con
+la estimación del riesgo nutricional.
+
+</p>
+
+
+<p>
+
+Es importante mencionar que la importancia de variables no representa
+causalidad directa, sino el peso que cada característica tuvo durante
+el proceso predictivo del algoritmo.
+
+</p>
+
+
+</div>
+
+
+</section>
+
+
+
+
+
+
+
+<!-- RECOMENDACIONES -->
+
+
+<section id="recomendaciones"
+class="modulo oculto">
+
+
+<div class="card sombra">
+
+
+<h2>
+Recomendaciones para la prevención de la desnutrición crónica infantil
+</h2>
+
+
+<p>
+
+La prevención de la desnutrición crónica infantil requiere un abordaje
+integral que considere factores nutricionales, médicos, familiares,
+sociales y ambientales. Los primeros años de vida representan una etapa
+fundamental para el crecimiento físico y desarrollo cognitivo del niño,
+por lo que la identificación temprana de factores de riesgo permite
+establecer acciones oportunas de prevención y atención.
+
+</p>
+
+
+<p>
+
+Las recomendaciones presentadas en este sistema tienen un propósito
+informativo y preventivo. Los resultados generados por el modelo de
+Machine Learning representan una estimación del riesgo nutricional y
+no sustituyen la evaluación realizada por profesionales médicos,
+nutricionistas o personal sanitario especializado.
+
+</p>
+
+
+
+<hr>
+
+
+<h4>
+1. Seguimiento del crecimiento infantil
+</h4>
+
+
+<p>
+
+Es fundamental realizar controles periódicos de crecimiento donde se
+evalúen indicadores como peso, talla, edad y desarrollo general del niño.
+El monitoreo continuo permite identificar alteraciones nutricionales
+antes de que evolucionen hacia problemas más graves.
+
+</p>
+
+
+
+<ul>
+
+<li>
+Realizar controles de crecimiento según la edad del niño.
+</li>
+
+<li>
+Registrar periódicamente peso y talla.
+</li>
+
+<li>
+Evaluar el crecimiento mediante curvas de referencia infantil.
+</li>
+
+<li>
+Consultar oportunamente ante disminución del peso o retraso del crecimiento.
+</li>
+
+</ul>
+
+
+
+
+<h4>
+2. Alimentación adecuada durante la infancia
+</h4>
+
+
+<p>
+
+Una alimentación equilibrada es uno de los principales factores
+protectores frente a la desnutrición crónica. La dieta infantil debe
+aportar energía suficiente, proteínas, vitaminas y minerales necesarios
+para el crecimiento y desarrollo adecuado.
+
+</p>
+
+
+<ul>
+
+<li>
+Promover la lactancia materna durante los primeros meses de vida según recomendaciones sanitarias.
+</li>
+
+<li>
+Introducir alimentación complementaria adecuada después de la etapa exclusiva de lactancia.
+</li>
+
+<li>
+Incluir alimentos ricos en proteínas como carnes, huevos, pescado,
+legumbres y productos nutritivos disponibles localmente.
+</li>
+
+<li>
+Fomentar el consumo de frutas y verduras para garantizar el aporte de micronutrientes.
+</li>
+
+</ul>
+
+
+
+
+<h4>
+3. Prevención de enfermedades infantiles
+</h4>
+
+
+<p>
+
+Las enfermedades infecciosas frecuentes pueden incrementar el riesgo de
+desnutrición debido a la disminución del apetito, pérdida de nutrientes
+y aumento de las necesidades metabólicas del organismo.
+
+</p>
+
+
+<ul>
+
+<li>
+Mantener actualizado el esquema de vacunación infantil.
+</li>
+
+<li>
+Realizar controles médicos preventivos.
+</li>
+
+<li>
+Buscar atención profesional ante cuadros frecuentes de diarrea o infecciones respiratorias.
+</li>
+
+<li>
+Promover prácticas adecuadas de higiene personal y preparación segura de alimentos.
+</li>
+
+</ul>
+
+
+
+
+<h4>
+4. Importancia del control prenatal y cuidado materno
+</h4>
+
+
+<p>
+
+La prevención inicia desde la etapa del embarazo. El estado nutricional
+de la madre, los controles prenatales y la atención durante el parto
+influyen directamente en las condiciones iniciales de vida del recién
+nacido.
+
+</p>
+
+
+<ul>
+
+<li>
+Realizar controles prenatales durante el embarazo.
+</li>
+
+<li>
+Mantener una adecuada suplementación indicada por profesionales de salud.
+</li>
+
+<li>
+Controlar factores asociados al bajo peso al nacer.
+</li>
+
+<li>
+Garantizar atención especializada durante el nacimiento.
+</li>
+
+</ul>
+
+
+
+
+<h4>
+5. Atención prioritaria según nivel de riesgo
+</h4>
+
+
+<p>
+
+Cuando el sistema predictivo identifica un nivel de riesgo elevado,
+se recomienda priorizar la evaluación clínica del niño para determinar
+las causas asociadas y establecer estrategias de intervención.
+
+</p>
+
+
+<ul>
+
+<li>
+Riesgo alto: requiere valoración profesional y seguimiento cercano.
+</li>
+
+<li>
+Riesgo medio: requiere vigilancia nutricional y controles periódicos.
+</li>
+
+<li>
+Riesgo bajo: mantener hábitos saludables y controles preventivos.
+</li>
+
+</ul>
+
+
+
+
+<hr>
+
+
+<h4>
+Nota importante
+</h4>
+
+
+<p>
+
+Este sistema fue desarrollado como una herramienta tecnológica de apoyo
+para la identificación temprana de posibles casos de desnutrición
+crónica infantil mediante técnicas de Machine Learning. La decisión
+final sobre diagnóstico, tratamiento o intervención corresponde
+exclusivamente al personal profesional de salud.
+
+</p>
+
+
+
+</div>
+
+
+</section>
+
+
+
+</main>
+
+
+</div>
+
+
+
+<script src="/static/js/app.js"></script>
+
+
+</body>
+
+
+</html>

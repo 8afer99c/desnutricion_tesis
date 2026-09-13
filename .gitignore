@@ -17,5 +17,24 @@ backups/
 # Salidas generadas por el pipeline (regenerables, no versionadas)
 TESIS MACHINE LEARNING/TESIS MACHINE LEARNING/pipeline_v2/output/
 
-# Subproyecto con su propio repo git anidado (API_DESNUTRICION) -- fuera de alcance por ahora
-API_DESNUTRICION/
+# Datos crudos y artefactos derivados (no son codigo)
+TESIS MACHINE LEARNING/TESIS MACHINE LEARNING/DATA/
+TESIS MACHINE LEARNING/TESIS MACHINE LEARNING/GRAFICOS/
+TESIS MACHINE LEARNING/TESIS MACHINE LEARNING/columnas.txt
+
+# Resumen local de la sesion -- nunca se sube
+CONTEXTO_PROYECTO.md
+
+# API_DESNUTRICION tiene su propio repo git anidado (.git no se toca ni se
+# sube desde aqui). Se trackea solo el codigo, no datos/modelos/entornos.
+API_DESNUTRICION/API_DESNUTRICION/.git/
+API_DESNUTRICION/API_DESNUTRICION/.git.temp_hidden/
+API_DESNUTRICION/API_DESNUTRICION/venv/
+API_DESNUTRICION/API_DESNUTRICION/__pycache__/
+API_DESNUTRICION/API_DESNUTRICION/app/__pycache__/
+API_DESNUTRICION/API_DESNUTRICION/outputs/
+API_DESNUTRICION/API_DESNUTRICION/data/
+API_DESNUTRICION/API_DESNUTRICION/models/
+API_DESNUTRICION/API_DESNUTRICION/backups/
+API_DESNUTRICION/API_DESNUTRICION/.env
+

@@ -1078,32 +1078,37 @@ git commit -m "fix: Analytics.metricas() calcula desde el modelo real en vez de 
 
 ---
 
-### Task 11 (opcional, requiere aprobación): Cutover del modelo detrás de una variable de entorno
+### Task 11 (aprobado por el usuario): Cutover del modelo detrás de una variable de entorno
 
-Por defecto (`MODEL_VERSION` sin definir) la API sigue usando exactamente el modelo v1 actual — cero cambio de comportamiento hasta que el usuario decida exportar `MODEL_VERSION=v2`.
+**Actualizado tras la aprobación explícita del usuario ("conecta el v2 a la api"):** el default de `MODEL_VERSION` pasa a ser `"v2"` (no `"v1"`) -- la API queda usando el modelo corregido por defecto. Se mantiene la variable de entorno como mecanismo de rollback instantáneo (`MODEL_VERSION=v1` vuelve al modelo anterior sin redeploy de código). No se toca la configuración del servicio en Render (fuera de alcance de este repo/sesión) ni se hace `git push` al remoto -- eso queda para que el usuario lo haga cuando decida desplegar esta rama.
+
+**Nota importante:** Task 10 ya copió `models/metricas_v2.json` a la API, pero esa copia quedó desactualizada tras la regularización de Task 13 (el archivo cambió: `recall_clase_1` pasó de 0.7346 a 0.6930). Este task debe volver a copiar `metricas_v2.json` además de `modelo_v2.joblib`, para que `/dashboard/metricas` refleje el modelo regularizado real.
 
 **Files:**
 - Modify: `API_DESNUTRICION/API_DESNUTRICION/app/config.py`
-- Create: `API_DESNUTRICION/API_DESNUTRICION/models/modelo_v2.joblib` (copia)
+- Create/Update: `API_DESNUTRICION/API_DESNUTRICION/models/modelo_v2.joblib` (copia, ahora el modelo regularizado de 28.3MB)
+- Update: `API_DESNUTRICION/API_DESNUTRICION/models/metricas_v2.json` (re-copiar, estaba desactualizado)
 - Create: `API_DESNUTRICION/API_DESNUTRICION/tests/test_api_contract.py`
 
-- [ ] **Step 1: Copiar el modelo v2 a la API**
+- [ ] **Step 1: Copiar el modelo v2 (regularizado) y las métricas actualizadas a la API**
 
 ```bash
 cp "C:/Users/Chris/Desktop/TESIS 8A/TESIS MACHINE LEARNING/TESIS MACHINE LEARNING/pipeline_v2/output/modelo_v2.joblib" \
    "C:/Users/Chris/Desktop/TESIS 8A/API_DESNUTRICION/API_DESNUTRICION/models/modelo_v2.joblib"
+cp "C:/Users/Chris/Desktop/TESIS 8A/TESIS MACHINE LEARNING/TESIS MACHINE LEARNING/pipeline_v2/output/metricas_v2.json" \
+   "C:/Users/Chris/Desktop/TESIS 8A/API_DESNUTRICION/API_DESNUTRICION/models/metricas_v2.json"
 ```
 
-- [ ] **Step 2: Agregar la variable de entorno en `config.py`**
+- [ ] **Step 2: Agregar la variable de entorno en `config.py`, con default `"v2"`**
 
 ```python
 # app/config.py -- agregar después de MODEL_PATH
 import os
 
-MODEL_VERSION = os.environ.get("MODEL_VERSION", "v1")
+MODEL_VERSION = os.environ.get("MODEL_VERSION", "v2")
 MODEL_PATH_V1 = BASE_DIR / "models" / "modelo_final_api.joblib"
 MODEL_PATH_V2 = BASE_DIR / "models" / "modelo_v2.joblib"
-MODEL_PATH = MODEL_PATH_V2 if MODEL_VERSION == "v2" else MODEL_PATH_V1
+MODEL_PATH = MODEL_PATH_V1 if MODEL_VERSION == "v1" else MODEL_PATH_V2
 ```
 
 (`app/predictor.py` no cambia — sigue haciendo `joblib.load(MODEL_PATH)`, así que hereda el comportamiento sin tocarlo.)
@@ -1150,22 +1155,22 @@ def test_predict_con_fila_real_devuelve_esquema_esperado():
     assert 0.0 <= body["probabilidad"] <= 1.0
 ```
 
-- [ ] **Step 4: Ejecutar con `MODEL_VERSION` sin definir (default = v1, debe comportarse EXACTAMENTE igual que hoy)**
+- [ ] **Step 4: Ejecutar con `MODEL_VERSION` sin definir (nuevo default = v2, el modelo corregido)**
 
 ```bash
 cd "C:/Users/Chris/Desktop/TESIS 8A/API_DESNUTRICION/API_DESNUTRICION"
 python -m pytest tests/test_api_contract.py -v
 ```
 
-Expected: `3 passed` — confirma que nada se rompió con el modelo actual.
+Expected: `3 passed` — confirma que el modelo v2 (regularizado) respeta el contrato de la API por defecto.
 
-- [ ] **Step 5: Ejecutar con `MODEL_VERSION=v2` para confirmar que el nuevo modelo también respeta el contrato**
+- [ ] **Step 5: Ejecutar con `MODEL_VERSION=v1` para confirmar que el rollback instantáneo también funciona**
 
 ```bash
-MODEL_VERSION=v2 python -m pytest tests/test_api_contract.py -v
+MODEL_VERSION=v1 python -m pytest tests/test_api_contract.py -v
 ```
 
-Expected: `3 passed` — mismo contrato de API, modelo distinto por debajo.
+Expected: `3 passed` — mismo contrato de API con el modelo anterior, confirmando que el rollback (quitar/cambiar la variable de entorno) funciona sin redeploy de código.
 
 - [ ] **Step 6: Commit (sin cambiar el default en producción)**
 
@@ -1174,9 +1179,232 @@ git add app/config.py models/modelo_v2.joblib tests/test_api_contract.py
 git commit -m "feat: soporte de MODEL_VERSION (v1 por defecto) para cutover gradual del modelo"
 ```
 
-- [ ] **Step 7: Cutover real — solo cuando el usuario lo pida explícitamente**
+- [ ] **Step 7: Nota sobre Render (fuera de alcance de este repo/sesión)**
 
-En Render, agregar la variable de entorno `MODEL_VERSION=v2` en el servicio (`render.yaml` no la define, así que por defecto seguiría en v1 incluso después de este deploy). Documentar el rollback: quitar la variable de entorno vuelve a v1 instantáneamente, sin redeploy de código.
+El código ya queda con v2 como default local. Cuando el usuario decida desplegar esta rama a Render, no necesita configurar nada adicional para usar v2 (es el default). Si en algún momento quiere volver a v1 en producción sin redeploy, basta con agregar la variable de entorno `MODEL_VERSION=v1` en el servicio de Render. Esta sesión no tiene acceso al dashboard de Render ni hace `git push` -- eso queda para el usuario.
+
+---
+
+## Fase 2b — Regularizar el modelo ganador (decisión post-review-final)
+
+El review final de toda la rama detectó que `modelo_v2.joblib` pesa **170MB** (89x el 1.9MB de v1) porque Random Forest ganó con `n_estimators=300` y sin límite de profundidad sobre ~340 columnas (tras one-hot encoding), y confirmó sobreajuste severo (PR-AUC train=1.00 vs. test=0.41). El plan original solo tenía grilla de hiperparámetros para XGBoost (si ganaba); Random Forest ganó y se usó "tal cual". El usuario decidió explícitamente: **regularizar y reentrenar** antes de conectar el modelo a la API, no copiar el archivo de 170MB tal cual ni solo comprimirlo.
+
+### Task 13: Regularizar Random Forest (reduce tamaño y sobreajuste, vía búsqueda de hiperparámetros real)
+
+**Files:**
+- Modify: `pipeline_v2/entrenar_modelo.py` (agregar rama de tuning para Random Forest, análoga a la de XGBoost)
+- Test: `pipeline_v2/tests/test_modelo_v2_output.py` (ya existente — debe seguir pasando; se agrega una aserción de tamaño de archivo)
+
+- [ ] **Step 1: Agregar la rama de tuning para Random Forest**
+
+Modificar el bloque `if nombre_ganador == "XGBoost": ... else: ...` para que también cubra `"Random Forest"`:
+
+```python
+if nombre_ganador == "XGBoost":
+    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=RANDOM_STATE)
+    parametros = {
+        "modelo__n_estimators": [100, 200, 300, 400, 500],
+        "modelo__max_depth": [3, 4, 5, 6, 7, 8],
+        "modelo__learning_rate": [0.01, 0.03, 0.05, 0.1, 0.2],
+        "modelo__subsample": [0.6, 0.7, 0.8, 0.9, 1.0],
+        "modelo__colsample_bytree": [0.6, 0.7, 0.8, 0.9, 1.0],
+        "modelo__gamma": [0, 0.1, 0.2, 0.3, 0.5],
+        "modelo__min_child_weight": [1, 3, 5, 7],
+    }
+    busqueda = RandomizedSearchCV(
+        estimator=pipeline_ganador, param_distributions=parametros, n_iter=40,
+        scoring="average_precision", cv=cv, verbose=1,
+        random_state=RANDOM_STATE, n_jobs=-1,
+    )
+    busqueda.fit(X_train, y_train)
+    pipeline_final = busqueda.best_estimator_
+    print("Mejores hiperparámetros:", busqueda.best_params_)
+    print("Mejor score CV (average_precision):", busqueda.best_score_)
+elif nombre_ganador == "Random Forest":
+    # Regulariza para reducir tamaño en disco (170MB con árboles sin
+    # límite de profundidad) y el sobreajuste severo detectado
+    # (PR-AUC train=1.00 vs test=0.41) -- decisión explícita del usuario
+    # tras el review final, en vez de copiar el modelo tal cual o solo
+    # comprimir el archivo.
+    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=RANDOM_STATE)
+    parametros = {
+        "modelo__n_estimators": [100, 150, 200, 300],
+        "modelo__max_depth": [5, 8, 10, 15, 20],
+        "modelo__min_samples_leaf": [1, 2, 5, 10],
+        "modelo__min_samples_split": [2, 5, 10],
+        "modelo__max_features": ["sqrt", "log2"],
+    }
+    busqueda = RandomizedSearchCV(
+        estimator=pipeline_ganador, param_distributions=parametros, n_iter=40,
+        scoring="average_precision", cv=cv, verbose=1,
+        random_state=RANDOM_STATE, n_jobs=-1,
+    )
+    busqueda.fit(X_train, y_train)
+    pipeline_final = busqueda.best_estimator_
+    print("Mejores hiperparámetros:", busqueda.best_params_)
+    print("Mejor score CV (average_precision):", busqueda.best_score_)
+else:
+    pipeline_final = pipeline_ganador
+    print(
+        f"'{nombre_ganador}' no tiene grilla de hiperparámetros en este script; "
+        "se usa tal cual salió de la comparación base."
+    )
+```
+
+- [ ] **Step 2: Re-ejecutar el entrenamiento completo**
+
+```bash
+cd "C:/Users/Chris/Desktop/TESIS 8A/TESIS MACHINE LEARNING/TESIS MACHINE LEARNING"
+.venv/Scripts/python.exe -m pipeline_v2.entrenar_modelo
+```
+
+Expected: Random Forest sigue ganando la comparación base (mismo resultado que antes, `average_precision` idéntico ya que esa parte del código no cambia), pero ahora entra a la rama de tuning nueva en vez de usarse "tal cual". Verificar en la salida que aparecen "Mejores hiperparámetros" y que `max_depth`/`min_samples_leaf` del resultado NO son `None`/`1` (es decir, que la regularización realmente se aplicó).
+
+- [ ] **Step 3: Verificar tamaño y desempeño**
+
+```bash
+.venv/Scripts/python.exe -c "
+import os, json
+size_mb = os.path.getsize('pipeline_v2/output/modelo_v2.joblib') / 1e6
+print(f'Tamaño del modelo: {size_mb:.1f} MB')
+with open('pipeline_v2/output/metricas_v2.json', encoding='utf-8') as f:
+    m = json.load(f)
+print('recall_clase_1:', m['recall_clase_1'])
+print('pr_auc:', m['pr_auc'])
+print('brecha train/test (accuracy_balanced):', m['train']['accuracy_balanced'] - m['accuracy_balanced'])
+"
+```
+
+Expected: tamaño considerablemente menor que 170MB (idealmente <20MB dado el límite de profundidad), `recall_clase_1` no debe caer muy por debajo de 0.70 (el valor pre-regularización era ~0.7346 -- una caída moderada es aceptable y esperada a cambio de menos sobreajuste, pero si cae por debajo de, digamos, 0.55, tratar como BLOCKED y reportar al controller en vez de aceptar cualquier resultado), y la brecha train/test de `accuracy_balanced` debe ser claramente menor que la brecha anterior (0.9996 - 0.6276 = 0.372).
+
+- [ ] **Step 4: Ejecutar los tests existentes**
+
+```bash
+.venv/Scripts/python.exe -m pytest pipeline_v2/tests/ -v
+```
+
+Expected: todos pasan (los mismos 17 de antes; ninguno depende de valores exactos de tamaño del modelo).
+
+- [ ] **Step 5: Re-ejecutar los scripts que dependen de `modelo_v2.joblib`/`metricas_v2.json`**
+
+```bash
+.venv/Scripts/python.exe -m pipeline_v2.comparar_v1_v2
+.venv/Scripts/python.exe -m pipeline_v2.tabla_experimento
+```
+
+Expected: ambos corren sin error y reflejan los nuevos números (el umbral óptimo puede cambiar levemente ya que el modelo cambió).
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add "TESIS MACHINE LEARNING/TESIS MACHINE LEARNING/pipeline_v2/entrenar_modelo.py"
+git commit -m "fix: regularizar Random Forest (reduce tamano del modelo y sobreajuste)"
+```
+
+(Los artefactos regenerados en `pipeline_v2/output/` no se commitean, como siempre.)
+
+---
+
+### Task 14: Corregir texto obsoleto sobre sobreajuste en `tabla_experimento.py`
+
+El review de la Task 13 confirmó un hallazgo real: la fila "Brecha train vs test" en `tabla_experimento.py` tiene hardcodeado el texto "sobreajuste esperado en un bosque sin profundidad máxima" sin importar el modelo real — ahora que Random Forest tiene `max_depth=20` (Task 13), ese texto es incorrecto.
+
+**Files:**
+- Modify: `pipeline_v2/tabla_experimento.py` (líneas ~113-122, dentro de la función que arma `filas`)
+
+- [ ] **Step 1: Reemplazar el texto hardcodeado por uno derivado del hiperparámetro real**
+
+```python
+    if "train" in m:
+        tr = m["train"]
+        max_depth = m.get("hiperparametros_modelo", {}).get("max_depth")
+        contexto_regularizacion = (
+            "bosque sin profundidad máxima" if max_depth is None
+            else f"bosque con profundidad máxima={max_depth}"
+        )
+        filas.append((
+            "Brecha train vs test",
+            f"balanced accuracy train={tr['accuracy_balanced']:.4f} vs "
+            f"test={m['accuracy_balanced']:.4f}; "
+            f"PR-AUC train={tr['pr_auc']:.4f} vs test={m['pr_auc']:.4f} "
+            f"({contexto_regularizacion}, reportado de forma explícita)"
+        ))
+```
+
+- [ ] **Step 2: Re-ejecutar y verificar**
+
+```bash
+cd "C:/Users/Chris/Desktop/TESIS 8A/TESIS MACHINE LEARNING/TESIS MACHINE LEARNING"
+.venv/Scripts/python.exe -m pipeline_v2.tabla_experimento
+```
+
+Expected: la fila "Brecha train vs test" ahora dice "bosque con profundidad máxima=20" (o el valor real que haya quedado tras Task 13), no "sin profundidad máxima".
+
+- [ ] **Step 3: Ejecutar tests**
+
+```bash
+.venv/Scripts/python.exe -m pytest pipeline_v2/tests/ -v
+```
+
+Expected: 17/17 pasan (este cambio no toca ninguna lógica que los tests cubran).
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add "TESIS MACHINE LEARNING/TESIS MACHINE LEARNING/pipeline_v2/tabla_experimento.py"
+git commit -m "fix: derivar el texto de la brecha train/test del max_depth real"
+```
+
+---
+
+### Task 15: Test que distingue realmente v1 de v2 en el cutover
+
+El review de Task 11 encontró un hueco real (heredado del diseño original del plan): los 3 tests de `test_api_contract.py` solo verifican la forma genérica de la respuesta (status codes, rangos de valores), no que el modelo realmente activo sea el que `MODEL_VERSION` dice que debería ser. Dado que Task 11 es el cutover más consecuente del proyecto, vale la pena cerrar ese hueco.
+
+**Files:**
+- Modify: `API_DESNUTRICION/API_DESNUTRICION/tests/test_api_contract.py` (agregar un test)
+
+- [ ] **Step 1: Agregar el test que compara la API contra el modelo cargado directamente**
+
+```python
+# Agregar al final de tests/test_api_contract.py
+
+def test_predict_probabilidad_coincide_con_el_modelo_configurado():
+    import joblib
+    from app.config import MODEL_PATH
+
+    ruta = Path(__file__).resolve().parent.parent / "data" / "ENSANUT_MODELO.csv"
+    df = pd.read_csv(ruta)
+    fila = df.iloc[0][Predictor.features()].to_dict()
+
+    r = client.post("/predict", json=fila)
+    prob_api = r.json()["probabilidad"]
+
+    modelo_directo = joblib.load(MODEL_PATH)
+    entrada = pd.DataFrame([fila])[Predictor.features()]
+    prob_directa = modelo_directo.predict_proba(entrada)[0][1]
+
+    assert abs(prob_api - round(prob_directa, 4)) < 1e-4
+```
+
+Esto prueba, sin importar qué valga `MODEL_VERSION`, que la probabilidad que devuelve la API es exactamente la del modelo que `config.py` seleccionó -- si el cutover estuviera mal cableado (p. ej. `predictor.py` cacheando el modelo viejo, o `MODEL_PATH` apuntando al archivo equivocado), este test lo detectaría donde los 3 anteriores no podían.
+
+- [ ] **Step 2: Ejecutar bajo ambos escenarios**
+
+```bash
+cd "C:/Users/Chris/Desktop/TESIS 8A/API_DESNUTRICION/API_DESNUTRICION"
+python -m pytest tests/test_api_contract.py -v
+MODEL_VERSION=v1 python -m pytest tests/test_api_contract.py -v
+```
+
+Expected: `4 passed` en ambos casos.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add tests/test_api_contract.py
+git commit -m "test: verificar que la API realmente sirve el modelo configurado por MODEL_VERSION"
+```
 
 ---
 
