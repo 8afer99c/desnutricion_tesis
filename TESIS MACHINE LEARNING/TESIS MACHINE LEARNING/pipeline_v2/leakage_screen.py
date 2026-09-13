@@ -4,7 +4,6 @@ CADA variable por separado. Un AUC > 0.95 con una sola variable es sospechoso
 y merece revisión manual (puede ser fuga, o puede ser una variable
 legítimamente muy predictiva -- este script no decide, solo señala).
 """
-import pandas as pd
 from sklearn.metrics import roc_auc_score
 from sklearn.preprocessing import OrdinalEncoder
 
@@ -20,6 +19,7 @@ def run():
     X = df.drop(columns=[TARGET_COL])
 
     sospechosas = []
+    omitidas = []
     for columna in X.columns:
         serie = X[columna]
         try:
@@ -31,9 +31,16 @@ def run():
             auc = roc_auc_score(y, valores)
             auc = max(auc, 1 - auc)  # AUC sin importar la dirección de la relación
         except Exception:
+            omitidas.append(columna)
             continue
         if auc > UMBRAL:
             sospechosas.append((columna, auc))
+
+    print(f"Columnas evaluadas: {len(X.columns) - len(omitidas)}/{len(X.columns)}", end="")
+    if omitidas:
+        print(f" (omitidas: {len(omitidas)} - {omitidas})")
+    else:
+        print(" (omitidas: 0)")
 
     sospechosas.sort(key=lambda t: -t[1])
     if sospechosas:
