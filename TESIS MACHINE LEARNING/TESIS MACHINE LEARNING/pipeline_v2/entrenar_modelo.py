@@ -14,12 +14,18 @@ Diferencias frente a ENTRENAMIENTO.ipynb:
 5. Reporta métricas completas por clase (no solo promedios ponderados):
    precision/recall/F1 de ambas clases, balanced accuracy, ROC-AUC, PR-AUC y
    matriz de confusión -- todo se guarda en metricas_v2.json.
+6. Deja constancia de si el modelo ganador recibió o no búsqueda de
+   hiperparámetros ("hiperparametros_ajustados") junto con los parámetros
+   efectivos del estimador final ("hiperparametros_modelo"), y reporta las
+   métricas sobre TRAIN además de TEST ("train") para que la brecha de
+   sobreajuste sea visible y auditable.
 """
 import json
 
 import joblib
 import numpy as np
 from joblib import parallel_backend
+from sklearn.base import clone
 from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.impute import SimpleImputer
@@ -41,6 +47,16 @@ from pipeline_v2.split_dataset import make_split
 def build_preprocessor(X):
     numericas = X.select_dtypes(include=["int64", "float64"]).columns.tolist()
     categoricas = X.select_dtypes(include=["object", "category", "bool"]).columns.tolist()
+
+    # Tripwire: ColumnTransformer usa remainder="drop", así que cualquier
+    # columna con un dtype no cubierto por las dos listas de arriba (int32,
+    # dtypes nullable de pandas, datetime, etc.) desaparecería en silencio del
+    # modelo. Preferimos fallar ruidosamente a entrenar con menos variables de
+    # las declaradas en la tesis.
+    assert len(numericas) + len(categoricas) == X.shape[1], (
+        "hay columnas con dtype no cubierto: "
+        f"{sorted(set(X.columns) - set(numericas) - set(categoricas))}"
+    )
 
     pipe_numerico = Pipeline([
         ("imputer", SimpleImputer(strategy="median")),
@@ -91,9 +107,13 @@ def find_best_threshold(pipeline, X_train, y_train, cv=5) -> float:
     # backend 'threading' como workaround puramente de infraestructura --
     # el resultado numérico de cross_val_predict es determinista e idéntico
     # independientemente del backend usado; solo cambia el paralelismo.
+    # Mismo StratifiedKFold explícito y sembrado que usa la búsqueda de
+    # hiperparámetros de XGBoost, para que ambas validaciones cruzadas del
+    # script sean consistentes y reproducibles.
+    particion = StratifiedKFold(n_splits=cv, shuffle=True, random_state=RANDOM_STATE)
     with parallel_backend("threading"):
         probas_oof = cross_val_predict(
-            pipeline, X_train, y_train, cv=cv, method="predict_proba", n_jobs=-1
+            pipeline, X_train, y_train, cv=particion, method="predict_proba", n_jobs=-1
         )[:, 1]
     mejor_umbral, mejor_f1 = 0.5, -1.0
     for umbral in np.arange(0.05, 0.95, 0.01):
@@ -101,7 +121,10 @@ def find_best_threshold(pipeline, X_train, y_train, cv=5) -> float:
         f1 = f1_score(y_train, preds, pos_label=1, zero_division=0)
         if f1 > mejor_f1:
             mejor_umbral, mejor_f1 = float(umbral), f1
-    return mejor_umbral
+    # np.arange acumula error de punto flotante (0.23000000000000004); el
+    # umbral se guarda como artefacto y se propaga a la API, así que se
+    # redondea a un valor limpio.
+    return round(float(mejor_umbral), 4)
 
 
 def evaluate(pipeline, X_test, y_test, umbral: float = 0.5) -> dict:
@@ -139,7 +162,12 @@ def run():
     resultados = []
     pipelines = {}
     for nombre, modelo in candidate_models(scale_pos_weight).items():
-        pipeline = Pipeline([("preprocesador", preprocesador), ("modelo", modelo)])
+        # clone() del preprocesador por candidato: Pipeline.fit ajusta en
+        # sitio, así que compartir una sola instancia mutable entre los 4
+        # pipelines los acopla (hoy es inocuo porque los 4 se ajustan sobre el
+        # mismo X_train con transformadores deterministas, pero es una trampa
+        # para cualquier cambio futuro).
+        pipeline = Pipeline([("preprocesador", clone(preprocesador)), ("modelo", modelo)])
         pipeline.fit(X_train, y_train)
         pipelines[nombre] = pipeline
         y_proba = pipeline.predict_proba(X_test)[:, 1]
@@ -188,14 +216,40 @@ def run():
     metricas["modelo_ganador"] = nombre_ganador
     metricas["comparativa_base"] = dict(resultados)
 
+    # Solo la rama de XGBoost tiene grilla de hiperparámetros en este script;
+    # si gana cualquier otro modelo se despliega con los valores por defecto de
+    # scikit-learn. Se deja constancia explícita en el artefacto para que la
+    # tesis no afirme un ajuste que no ocurrió.
+    metricas["hiperparametros_ajustados"] = (nombre_ganador == "XGBoost")
+    metricas["hiperparametros_modelo"] = {
+        k: v for k, v in pipeline_final.named_steps["modelo"].get_params().items()
+    }
+
+    # Evaluación sobre TRAIN con el mismo umbral, para que la brecha
+    # train-vs-test (sobreajuste) quede documentada en el artefacto en vez de
+    # ser una afirmación no verificada del plan.
+    metricas["train"] = evaluate(pipeline_final, X_train, y_train, umbral=umbral_optimo)
+
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     joblib.dump(pipeline_final, OUTPUT_DIR / "modelo_v2.joblib")
     with open(OUTPUT_DIR / "metricas_v2.json", "w", encoding="utf-8") as f:
-        json.dump(metricas, f, indent=2, ensure_ascii=False)
+        json.dump(metricas, f, indent=2, ensure_ascii=False, default=str)
 
     print("\n=== MÉTRICAS FINALES (test, sin fuga) ===")
-    resumen = {k: v for k, v in metricas.items() if k != "classification_report"}
-    print(json.dumps(resumen, indent=2, ensure_ascii=False))
+    omitir = {"classification_report", "train", "hiperparametros_modelo"}
+    resumen = {k: v for k, v in metricas.items() if k not in omitir}
+    print(json.dumps(resumen, indent=2, ensure_ascii=False, default=str))
+
+    print("\n=== BRECHA TRAIN vs TEST (diagnóstico de sobreajuste) ===")
+    for clave in ("accuracy_balanced", "recall_clase_1", "precision_clase_1",
+                  "f1_clase_1", "roc_auc", "pr_auc"):
+        tr, te = metricas["train"][clave], metricas[clave]
+        print(f"{clave:<20} train={tr:.4f}  test={te:.4f}  brecha={tr - te:+.4f}")
+
+    print(
+        f"\nHiperparámetros ajustados por búsqueda: "
+        f"{'sí (RandomizedSearchCV)' if metricas['hiperparametros_ajustados'] else 'no (valores por defecto de scikit-learn)'}"
+    )
 
 
 if __name__ == "__main__":
