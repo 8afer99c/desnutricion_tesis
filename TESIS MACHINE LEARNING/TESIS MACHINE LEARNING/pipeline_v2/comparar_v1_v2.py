@@ -14,6 +14,7 @@ v2 sí tiene un umbral ajustado (guardado en metricas_v2.json como
 cómo v2 realmente se usaría.
 """
 import json
+import sys
 
 import joblib
 import pandas as pd
@@ -23,6 +24,15 @@ from sklearn.metrics import (
 )
 
 from pipeline_v2.paths import OUTPUT_DIR, TARGET_COL, V1_MODEL_PATH
+
+# Este aviso viaja DENTRO del JSON y se imprime encima de la tabla: los
+# números de v1 aquí son optimistas y no deben citarse como su línea base.
+AVISO_V1 = (
+    "v1 se evalúa sobre filas que pudo haber memorizado en su propio "
+    "entrenamiento (su split original era distinto del de v2), así que sus "
+    "números aquí están inflados; su línea base real y sin fuga es "
+    "recall=0.4759 / roc_auc=0.6479 (ver baseline_v1_snapshot.json)."
+)
 
 
 def score_model(pipeline, X, y, umbral: float = 0.5):
@@ -40,6 +50,18 @@ def score_model(pipeline, X, y, umbral: float = 0.5):
 
 
 def run():
+    # La consola de Windows usa cp1252 por defecto y convertiría el aviso en
+    # mojibake justo cuando más importa que se lea.
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except (AttributeError, OSError):
+        pass
+
+    if not (OUTPUT_DIR / "test_v2.csv").exists():
+        raise SystemExit("Ejecuta primero: python -m pipeline_v2.split_dataset")
+    if not (OUTPUT_DIR / "metricas_v2.json").exists() or not (OUTPUT_DIR / "modelo_v2.joblib").exists():
+        raise SystemExit("Ejecuta primero: python -m pipeline_v2.entrenar_modelo")
+
     test_df = pd.read_csv(OUTPUT_DIR / "test_v2.csv")
     y = test_df[TARGET_COL]
     X = test_df.drop(columns=[TARGET_COL])
@@ -53,12 +75,16 @@ def run():
     v1_scores = score_model(v1, X[v1.feature_names_in_.tolist()], y, umbral=0.5)
     v2_scores = score_model(v2, X, y, umbral=umbral_v2)
 
+    print(f"AVISO: {AVISO_V1}\n")
     print(f"{'Métrica':<22}{'v1 (actual, umbral 0.5)':<26}{'v2 (corregido, umbral '+f'{umbral_v2:.2f})':<26}")
     for k in v1_scores:
         print(f"{k:<22}{str(v1_scores[k]):<26}{str(v2_scores[k]):<26}")
 
     with open(OUTPUT_DIR / "comparacion_v1_v2.json", "w", encoding="utf-8") as f:
-        json.dump({"v1": v1_scores, "v2": v2_scores}, f, indent=2)
+        json.dump(
+            {"_aviso": AVISO_V1, "v1": v1_scores, "v2": v2_scores},
+            f, indent=2, ensure_ascii=False,
+        )
 
 
 if __name__ == "__main__":
