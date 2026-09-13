@@ -202,6 +202,33 @@ def run():
         pipeline_final = busqueda.best_estimator_
         print("Mejores hiperparámetros:", busqueda.best_params_)
         print("Mejor score CV (average_precision):", busqueda.best_score_)
+    elif nombre_ganador == "Random Forest":
+        # Regulariza para reducir tamaño en disco (170MB con árboles sin
+        # límite de profundidad) y el sobreajuste severo detectado
+        # (PR-AUC train=1.00 vs test=0.41) -- decisión explícita del usuario
+        # tras el review final, en vez de copiar el modelo tal cual o solo
+        # comprimir el archivo.
+        cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=RANDOM_STATE)
+        parametros = {
+            "modelo__n_estimators": [100, 150, 200, 300],
+            "modelo__max_depth": [5, 8, 10, 15, 20],
+            "modelo__min_samples_leaf": [1, 2, 5, 10],
+            "modelo__min_samples_split": [2, 5, 10],
+            "modelo__max_features": ["sqrt", "log2"],
+        }
+        busqueda = RandomizedSearchCV(
+            estimator=pipeline_ganador, param_distributions=parametros, n_iter=40,
+            scoring="average_precision", cv=cv, verbose=1,
+            random_state=RANDOM_STATE, n_jobs=-1,
+        )
+        # Mismo workaround de entorno que en find_best_threshold y en la rama
+        # de XGBoost: backend 'loky' roto en esta máquina para Python 3.13 +
+        # Windows.
+        with parallel_backend("threading"):
+            busqueda.fit(X_train, y_train)
+        pipeline_final = busqueda.best_estimator_
+        print("Mejores hiperparámetros:", busqueda.best_params_)
+        print("Mejor score CV (average_precision):", busqueda.best_score_)
     else:
         pipeline_final = pipeline_ganador
         print(
@@ -216,11 +243,12 @@ def run():
     metricas["modelo_ganador"] = nombre_ganador
     metricas["comparativa_base"] = dict(resultados)
 
-    # Solo la rama de XGBoost tiene grilla de hiperparámetros en este script;
-    # si gana cualquier otro modelo se despliega con los valores por defecto de
-    # scikit-learn. Se deja constancia explícita en el artefacto para que la
-    # tesis no afirme un ajuste que no ocurrió.
-    metricas["hiperparametros_ajustados"] = (nombre_ganador == "XGBoost")
+    # Solo las ramas de XGBoost y Random Forest tienen grilla de
+    # hiperparámetros en este script; si gana cualquier otro modelo se
+    # despliega con los valores por defecto de scikit-learn. Se deja
+    # constancia explícita en el artefacto para que la tesis no afirme un
+    # ajuste que no ocurrió.
+    metricas["hiperparametros_ajustados"] = nombre_ganador in ("XGBoost", "Random Forest")
     metricas["hiperparametros_modelo"] = {
         k: v for k, v in pipeline_final.named_steps["modelo"].get_params().items()
     }
