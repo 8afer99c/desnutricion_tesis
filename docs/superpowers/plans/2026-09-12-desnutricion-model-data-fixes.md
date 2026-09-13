@@ -72,7 +72,7 @@ No hay `.git` en `TESIS MACHINE LEARNING/`. Si no se va a versionar, omitir este
 
 ```
 pandas==2.2.3
-numpy==1.26.4
+numpy>=1.26.4,<3
 scikit-learn==1.6.1
 xgboost==2.1.4
 joblib==1.5.1
