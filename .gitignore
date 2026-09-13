@@ -1,0 +1,21 @@
+# Datos y modelos pesados (se manejan como archivos locales, no en git)
+*.csv
+*.joblib
+*.xlsx
+*.pdf
+*.docx
+
+# Entornos virtuales
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Backups locales (copias de seguridad, no versionadas)
+backups/
+
+# Salidas generadas por el pipeline (regenerables, no versionadas)
+TESIS MACHINE LEARNING/TESIS MACHINE LEARNING/pipeline_v2/output/
+
+# Subproyecto con su propio repo git anidado (API_DESNUTRICION) -- fuera de alcance por ahora
+API_DESNUTRICION/
