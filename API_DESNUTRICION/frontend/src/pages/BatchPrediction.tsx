@@ -15,6 +15,16 @@ const BatchPrediction: React.FC = () => {
     setError(null);
     try {
       const response = await predictMasiva(file);
+      
+      // Check if the response is actually JSON (an error) instead of an Excel blob
+      if (response.type && response.type.includes('application/json')) {
+        const text = await response.text();
+        const data = JSON.parse(text);
+        setError(data.mensaje || 'Error al procesar el archivo.');
+        setLoading(false);
+        return;
+      }
+
       // Create a link to download the blob
       const url = window.URL.createObjectURL(new Blob([response]));
       const link = document.createElement('a');

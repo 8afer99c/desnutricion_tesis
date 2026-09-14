@@ -13,7 +13,9 @@ const Dashboard: React.FC = () => {
     fetchDashboard().then(setData).catch(console.error);
   }, []);
 
-  if (!data) return <div className="p-8 flex justify-center items-center h-full"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>;
+  if (!data) {
+    return <div className="p-8 flex justify-center items-center h-full"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div></div>;
+  }
 
   const chartData = [
     { name: 'Con Riesgo (Desnutrición)', value: data.casos_desnutricion || 0 },
@@ -21,7 +23,7 @@ const Dashboard: React.FC = () => {
   ];
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-6 animate-in fade-in duration-500">
       
       {/* Header Section */}
       <div className="relative overflow-hidden bg-gradient-to-r from-blue-900 to-indigo-800 p-8 rounded-3xl shadow-xl border border-blue-900/50 text-white">
