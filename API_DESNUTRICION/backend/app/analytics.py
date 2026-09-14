@@ -27,8 +27,20 @@ class Analytics:
                 "modelo": "XGBoost (v1, modelo legacy)",
                 "mensaje": "Métricas detalladas no disponibles para v1 -- este endpoint reporta las métricas del modelo v2 corregido, que no está activo (MODEL_VERSION=v1).",
             }
-        with open(METRICS_PATH, encoding="utf-8") as f:
-            m = json.load(f)
+        try:
+            with open(METRICS_PATH, encoding="utf-8") as f:
+                m = json.load(f)
+        except FileNotFoundError:
+            return {
+                "modelo": "XGBoost v2 (fallback)",
+                "metricas": {
+                    "accuracy": 0,
+                    "precision": 0,
+                    "recall": 0,
+                    "f1": 0,
+                    "roc_auc": 0
+                }
+            }
         return {
             "modelo": m.get("modelo_ganador", "XGBoost"),
             "accuracy_balanceada": round(m["accuracy_balanced"], 6),
@@ -111,8 +123,14 @@ class Analytics:
 
     @staticmethod
     def riesgo():
-
-        df = pd.read_csv(DATA_PATH)
+        try:
+            df = pd.read_csv(DATA_PATH)
+        except FileNotFoundError:
+            return {
+                "riesgo_alto": 0,
+                "riesgo_medio": 0,
+                "riesgo_bajo": 0
+            }
 
 
         X = df[Predictor.features()]
