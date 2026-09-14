@@ -264,7 +264,20 @@ def example():
 
         ejemplo[variable] = None
 
-    return ejemplo
+@app.get("/api/debug-files")
+def debug_files():
+    import os
+    from app.config import BASE_DIR
+    data_dir = BASE_DIR / "data"
+    outputs_dir = BASE_DIR / "outputs"
+    return {
+        "base_dir": str(BASE_DIR),
+        "data_exists": data_dir.exists(),
+        "data_files": os.listdir(data_dir) if data_dir.exists() else [],
+        "outputs_exists": outputs_dir.exists(),
+        "outputs_files": os.listdir(outputs_dir) if outputs_dir.exists() else [],
+        "cwd": os.getcwd()
+    }
 
 # ==========================================================
 # REACT SPA SERVING
@@ -279,4 +292,8 @@ def serve_react_spa(catchall: str):
     if os.path.isfile(file_path):
         return FileResponse(file_path)
         
-    return FileResponse("static_react/index.html")
+    response = FileResponse("static_react/index.html")
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response

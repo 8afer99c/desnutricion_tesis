@@ -19,9 +19,10 @@ class Dashboard:
 
         try:
             df = pd.read_csv(DATA_PATH)
-        except FileNotFoundError:
+        except FileNotFoundError as e:
+            import os
             return {
-                "error": "El archivo de datos (ENSANUT_MODELO.csv) no se encontró en el servidor. Las métricas no pueden ser calculadas.",
+                "error": f"Error: No se encontró el archivo. Ruta intentada: {DATA_PATH}. ¿Existe?: {os.path.exists(DATA_PATH)}",
                 "total_registros": 0,
                 "casos_desnutricion": 0,
                 "casos_sin_desnutricion": 0,

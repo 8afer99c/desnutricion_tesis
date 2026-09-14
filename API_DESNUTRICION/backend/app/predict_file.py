@@ -14,7 +14,11 @@ class PredictFile:
     @staticmethod
     def procesar(archivo):
 
-        df = pd.read_csv(archivo.file)
+        filename = archivo.filename.lower()
+        if filename.endswith('.xlsx') or filename.endswith('.xls'):
+            df = pd.read_excel(archivo.file)
+        else:
+            df = pd.read_csv(archivo.file)
 
         columnas_modelo = Predictor.features()
 
