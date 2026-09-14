@@ -46,7 +46,7 @@ app.mount("/assets", StaticFiles(directory="static_react/assets"), name="assets"
 # INICIO
 # ==========================================================
 
-@app.get("/info")
+@app.get("/api/info")
 def info():
 
     metricas = Analytics.metricas()
@@ -68,7 +68,7 @@ def info():
 # HEALTH
 # ==========================================================
 
-@app.get("/health")
+@app.get("/api/health")
 def health():
 
     return {
@@ -82,7 +82,7 @@ def health():
 # VARIABLES
 # ==========================================================
 
-@app.get("/features")
+@app.get("/api/features")
 def features():
 
     columnas = Predictor.features()
@@ -101,7 +101,7 @@ def features():
 # ==========================================================
 
 @app.post(
-    "/predict",
+    "/api/predict",
     response_model=PrediccionResponse
 )
 def predict(
@@ -191,7 +191,7 @@ def predict(
 # PREDICCIÓN MASIVA
 # ==========================================================
 
-@app.post("/predict-file")
+@app.post("/api/predict-file")
 def predict_file(
     archivo: UploadFile = File(...)
 ):
@@ -216,7 +216,7 @@ def predict_file(
     )
 
 from typing import Optional
-@app.get("/dashboard")
+@app.get("/api/dashboard")
 def dashboard(
     provincia: Optional[str] = None
 ):
@@ -230,7 +230,7 @@ def dashboard(
 # MÉTRICAS DEL MODELO
 # ==========================================================
 
-@app.get("/dashboard/metricas")
+@app.get("/api/dashboard/metricas")
 def metricas():
 
     return Analytics.metricas()
@@ -240,7 +240,7 @@ def metricas():
 # IMPORTANCIA VARIABLES
 # ==========================================================
 
-@app.get("/dashboard/importancia")
+@app.get("/api/dashboard/importancia")
 def importancia():
 
     return Analytics.importancia()
@@ -249,13 +249,13 @@ def importancia():
 # DISTRIBUCIÓN RIESGO
 # ==========================================================
 
-@app.get("/dashboard/riesgo")
+@app.get("/api/dashboard/riesgo")
 def riesgo():
 
     return Analytics.riesgo()
 
 
-@app.get("/example")
+@app.get("/api/example")
 def example():
 
     ejemplo = {}
