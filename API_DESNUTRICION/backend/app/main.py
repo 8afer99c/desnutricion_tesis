@@ -38,16 +38,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/assets", StaticFiles(directory="static_react/assets"), name="assets")
 
-templates = Jinja2Templates(directory="templates")
-
-@app.get("/")
-def inicio(request: Request):
-    return templates.TemplateResponse(
-        request=request,
-        name="index.html"
-    )
+# templates = Jinja2Templates(directory="templates")
 
 # ==========================================================
 # INICIO
@@ -272,3 +265,18 @@ def example():
         ejemplo[variable] = None
 
     return ejemplo
+
+# ==========================================================
+# REACT SPA SERVING
+# ==========================================================
+@app.get("/{catchall:path}")
+def serve_react_spa(catchall: str):
+    import os
+    if catchall.startswith("api/") or catchall in ("docs", "openapi.json"):
+        raise HTTPException(status_code=404)
+        
+    file_path = os.path.join("static_react", catchall)
+    if os.path.isfile(file_path):
+        return FileResponse(file_path)
+        
+    return FileResponse("static_react/index.html")
