@@ -33,20 +33,18 @@ class Analytics:
         except FileNotFoundError:
             return {
                 "modelo": "XGBoost v2 (fallback)",
-                "metricas": {
-                    "accuracy": 0,
-                    "precision": 0,
-                    "recall": 0,
-                    "f1": 0,
-                    "roc_auc": 0
-                }
+                "accuracy": 0,
+                "precision": 0,
+                "recall": 0,
+                "f1_score": 0,
+                "roc_auc": 0
             }
         return {
             "modelo": m.get("modelo_ganador", "XGBoost"),
-            "accuracy_balanceada": round(m["accuracy_balanced"], 6),
-            "precision_clase_desnutricion": round(m["precision_clase_1"], 6),
-            "recall_clase_desnutricion": round(m["recall_clase_1"], 6),
-            "f1_clase_desnutricion": round(m["f1_clase_1"], 6),
+            "accuracy": round(m["accuracy_balanced"], 6),
+            "precision": round(m["precision_clase_1"], 6),
+            "recall": round(m["recall_clase_1"], 6),
+            "f1_score": round(m["f1_clase_1"], 6),
             "roc_auc": round(m["roc_auc"], 6),
             "pr_auc": round(m["pr_auc"], 6),
         }
