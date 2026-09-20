@@ -1,54 +1,63 @@
 import React, { useState, useEffect } from 'react';
 import { predictIndividual, fetchFeatures } from '../services/api';
-import { ShieldAlert, CheckCircle, Activity } from 'lucide-react';
-import Tooltip from '../components/Tooltip';
+import { AlertTriangle, Info } from 'lucide-react';
 import clsx from 'clsx';
 
-const FIXED_VALUES: Record<string, number> = {
-  area: 1, provincia: 18, region_madre: 1, etnia_madre: 1, factor_expansion: 1, estrato: 1,
+// Categorías tal como aparecen en los datos de entrenamiento (ENSANUT 2018).
+const OPC = {
+  sexo: ['Hombre', 'Mujer'],
+  area: ['Urbano', 'Rural'],
+  prematuro: ['A Tiempo', 'Prematuro', 'Posmaduro', 'No sabe'],
+  diarrea: ['No', 'Si', 'No Sabe / No Responde'],
+  infeccion: ['No', 'Si'],
 };
+
+// El modelo usa la edad agrupada como categoría (mismos intervalos del entrenamiento).
+const grupoEdad = (m: number): string =>
+  m <= 11 ? '0-11' : m <= 18 ? '12-18' : m <= 23 ? '19-23' : m <= 30 ? '24-30' : m <= 35 ? '31-35' : m <= 42 ? '36-42' : m <= 47 ? '43-47' : '48-59';
+
+const campo = 'w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500';
+const etiqueta = 'text-sm font-semibold text-slate-700';
 
 const PredictionForm: React.FC = () => {
   const [features, setFeatures] = useState<string[]>([]);
   const [result, setResult] = useState<any>(null);
+  const [informadas, setInformadas] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [formData, setFormData] = useState({
-    edad_meses: 24,
-    sexo: 1,
-    peso_nacer_gramos: 3000,
-    talla_nacer_cm: 50,
-    prematuro: 0,
-    lactancia_meses: 6,
-    diarrea_ultimas_2_semanas: 0,
-    infeccion_respiratoria_2_semanas: 0,
+  const [f, setF] = useState({
+    edad_meses: 24, sexo: 'Mujer', area: 'Urbano', provincia: '18',
+    peso_nacer_gramos: 3200, talla_nacer_cm: 50, prematuro: 'A Tiempo', lactancia_meses: 6,
+    diarrea: 'No', infeccion: 'No',
   });
 
   useEffect(() => {
-    fetchFeatures().then(res => setFeatures(res.variables)).catch(console.error);
+    fetchFeatures().then((r) => setFeatures(r.variables)).catch(() => setError('No se pudo consultar la API.'));
   }, []);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: Number(value) }));
-  };
+  const set = (name: string, value: string | number) => setF((p) => ({ ...p, [name]: value }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError(null);
-    setResult(null);
+    setLoading(true); setError(null); setResult(null);
 
-    const payload: Record<string, number> = {};
-    features.forEach(f => payload[f] = 0);
-    Object.keys(FIXED_VALUES).forEach(k => { if (features.includes(k)) payload[k] = FIXED_VALUES[k]; });
-    Object.keys(formData).forEach(k => { if (features.includes(k)) payload[k] = (formData as any)[k]; });
-    if (features.includes('grupo_edad_meses')) payload['grupo_edad_meses'] = formData.edad_meses;
+    // Todas las variables del modelo se envían; las no informadas van como null y el
+    // Pipeline las imputa con la mediana o la moda del entrenamiento.
+    const payload: Record<string, any> = {};
+    features.forEach((v) => { payload[v] = null; });
+    const dados: Record<string, any> = {
+      edad_meses: f.edad_meses, grupo_edad_meses: grupoEdad(f.edad_meses), sexo: f.sexo, area: f.area,
+      peso_nacer_gramos: f.peso_nacer_gramos, talla_nacer_cm: f.talla_nacer_cm, prematuro: f.prematuro,
+      lactancia_meses: f.lactancia_meses, diarrea_ultimas_2_semanas: f.diarrea, infeccion_respiratoria_2_semanas: f.infeccion,
+    };
+    if (f.provincia) dados.provincia = Number(f.provincia);
+    let n = 0;
+    Object.entries(dados).forEach(([k, v]) => { if (features.includes(k)) { payload[k] = v; n += 1; } });
+    setInformadas(n);
 
     try {
-      const res = await predictIndividual(payload);
-      setResult(res);
+      setResult(await predictIndividual(payload));
     } catch (err: any) {
       setError(err?.response?.data?.detail?.mensaje || 'Error al procesar la solicitud.');
     } finally {
@@ -56,113 +65,74 @@ const PredictionForm: React.FC = () => {
     }
   };
 
+  const positivo = result?.prediccion === 1;
+
   return (
     <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in duration-500">
-      
+      <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 flex gap-3 text-amber-900 text-sm">
+        <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
+        <p>
+          <strong>Uso ilustrativo.</strong> El modelo necesita 114 variables y este formulario solo recoge {Object.keys(f).length}; el resto se completa
+          automáticamente con la mediana o la moda del entrenamiento. Con tan pocos datos la puntuación varía poco y <strong>no es interpretable
+          para un niño concreto</strong>. Para una clasificación con el modelo evaluado use la opción de clasificación por archivo.
+        </p>
+      </div>
+
       {result && (
-        <div className={clsx("p-8 rounded-2xl shadow-lg border relative overflow-hidden transition-all", result.prediccion === 1 ? "bg-red-50 border-red-200" : "bg-emerald-50 border-emerald-200")}>
-          <div className="absolute top-0 right-0 p-8 opacity-10">
-            {result.prediccion === 1 ? <ShieldAlert className="w-48 h-48 text-red-600" /> : <CheckCircle className="w-48 h-48 text-emerald-600" />}
-          </div>
-          <div className="relative z-10 flex flex-col md:flex-row items-center gap-8">
-            <div className={clsx("p-4 rounded-full", result.prediccion === 1 ? "bg-red-100 text-red-600" : "bg-emerald-100 text-emerald-600")}>
-              {result.prediccion === 1 ? <ShieldAlert className="w-12 h-12" /> : <CheckCircle className="w-12 h-12" />}
+        <div className={clsx('p-8 rounded-2xl shadow-lg border', positivo ? 'bg-red-50 border-red-200' : 'bg-emerald-50 border-emerald-200')}>
+          <h3 className="text-sm font-bold tracking-wider uppercase mb-1 text-slate-500">Clasificación estimada</h3>
+          <p className={clsx('text-3xl font-black mb-3', positivo ? 'text-red-700' : 'text-emerald-700')}>
+            {positivo ? 'Con desnutrición crónica (estimado)' : 'Sin desnutrición crónica (estimado)'}
+          </p>
+          <div className="flex flex-wrap gap-8 text-sm text-slate-700">
+            <div>
+              <p className="text-xs uppercase tracking-wider text-slate-500 font-bold">Puntuación del modelo</p>
+              <p className="text-2xl font-black">{(result.probabilidad * 100).toFixed(1)} %</p>
+              <p className="text-xs text-slate-500">No es una probabilidad calibrada</p>
             </div>
             <div>
-              <h3 className="text-sm font-bold tracking-wider uppercase mb-1 text-slate-500">Resultado Clínico</h3>
-              <p className={clsx("text-4xl font-black mb-2", result.prediccion === 1 ? "text-red-700" : "text-emerald-700")}>
-                {result.descripcion}
-              </p>
-              <div className="flex gap-6 mt-4">
-                <div>
-                  <p className="text-xs font-semibold text-slate-500 uppercase">Probabilidad</p>
-                  <p className="text-xl font-bold text-slate-800">{(result.probabilidad * 100).toFixed(1)}%</p>
-                </div>
-                <div>
-                  <p className="text-xs font-semibold text-slate-500 uppercase">Nivel de Riesgo</p>
-                  <p className="text-xl font-bold text-slate-800">{result.riesgo}</p>
-                </div>
-              </div>
+              <p className="text-xs uppercase tracking-wider text-slate-500 font-bold">Variables informadas</p>
+              <p className="text-2xl font-black">{informadas} de {features.length}</p>
+              <p className="text-xs text-slate-500">El resto se imputa</p>
             </div>
           </div>
         </div>
       )}
 
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200">
-        <div className="bg-slate-50 border-b border-slate-200 p-6 flex items-center gap-3 rounded-t-2xl">
-          <Activity className="w-5 h-5 text-blue-600" />
-          <h2 className="text-lg font-bold text-slate-800">Parámetros Clínicos del Paciente</h2>
+      <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 space-y-6">
+        <div className="flex items-center gap-2 text-slate-800">
+          <Info className="w-5 h-5 text-blue-600" />
+          <h2 className="text-lg font-bold">Datos del niño</h2>
         </div>
-        
-        <form onSubmit={handleSubmit} className="p-8 space-y-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="space-y-1">
-              <label className="text-sm font-semibold text-slate-700">Edad del paciente (meses)</label>
-              <input type="number" name="edad_meses" value={formData.edad_meses} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none" />
-            </div>
-            <div className="space-y-1">
-              <label className="text-sm font-semibold text-slate-700">Sexo asignado al nacer</label>
-              <select name="sexo" value={formData.sexo} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none">
-                <option value={1}>Masculino</option>
-                <option value={0}>Femenino</option>
-              </select>
-            </div>
-            <div className="space-y-1">
-              <Tooltip content="Peso registrado al momento del nacimiento en el centro de salud." position="top">
-                <label className="text-sm font-semibold text-slate-700 cursor-help border-b border-dashed border-slate-400">Peso al nacer (gramos)</label>
-              </Tooltip>
-              <input type="number" name="peso_nacer_gramos" value={formData.peso_nacer_gramos} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none mt-1" />
-            </div>
-            <div className="space-y-1">
-              <Tooltip content="Talla o longitud al momento del nacimiento." position="top">
-                <label className="text-sm font-semibold text-slate-700 cursor-help border-b border-dashed border-slate-400">Talla al nacer (cm)</label>
-              </Tooltip>
-              <input type="number" name="talla_nacer_cm" value={formData.talla_nacer_cm} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none mt-1" />
-            </div>
-            <div className="space-y-1">
-              <Tooltip content="Nacimiento ocurrido antes de las 37 semanas de gestación." position="top">
-                <label className="text-sm font-semibold text-slate-700 cursor-help border-b border-dashed border-slate-400">Antecedente de Prematuridad</label>
-              </Tooltip>
-              <select name="prematuro" value={formData.prematuro} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none mt-1">
-                <option value={0}>No</option>
-                <option value={1}>Sí</option>
-              </select>
-            </div>
-            <div className="space-y-1">
-              <Tooltip content="Tiempo de lactancia materna exclusiva o mixta en meses." position="top">
-                <label className="text-sm font-semibold text-slate-700 cursor-help border-b border-dashed border-slate-400">Duración de Lactancia (meses)</label>
-              </Tooltip>
-              <input type="number" name="lactancia_meses" value={formData.lactancia_meses} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none mt-1" />
-            </div>
-            <div className="space-y-1">
-              <Tooltip content="Presencia de episodios diarreicos clínicamente significativos." position="top">
-                <label className="text-sm font-semibold text-slate-700 cursor-help border-b border-dashed border-slate-400">Episodios de diarrea (últimas 2 sem.)</label>
-              </Tooltip>
-              <select name="diarrea_ultimas_2_semanas" value={formData.diarrea_ultimas_2_semanas} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none mt-1">
-                <option value={0}>No</option>
-                <option value={1}>Sí</option>
-              </select>
-            </div>
-            <div className="space-y-1">
-              <Tooltip content="Infecciones del tracto respiratorio inferior o superior reciente." position="top">
-                <label className="text-sm font-semibold text-slate-700 cursor-help border-b border-dashed border-slate-400">Infección respiratoria (últimas 2 sem.)</label>
-              </Tooltip>
-              <select name="infeccion_respiratoria_2_semanas" value={formData.infeccion_respiratoria_2_semanas} onChange={handleChange} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all outline-none mt-1">
-                <option value={0}>No</option>
-                <option value={1}>Sí</option>
-              </select>
-            </div>
-          </div>
-          
-          <div className="pt-6 border-t border-slate-100 flex justify-end">
-            <button type="submit" disabled={loading} className="bg-blue-600 text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-blue-500/30 hover:bg-blue-700 hover:shadow-blue-600/40 focus:ring-4 focus:ring-blue-200 transition-all disabled:opacity-50 flex items-center gap-2">
-              {loading ? (
-                <><div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> Procesando...</>
-              ) : 'Generar Predicción Clínica'}
-            </button>
-          </div>
-        </form>
-      </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-2"><label className={etiqueta}>Edad (meses, 0 a 59)</label>
+            <input type="number" min={0} max={59} value={f.edad_meses} onChange={(e) => set('edad_meses', Number(e.target.value))} className={campo} /></div>
+          <div className="space-y-2"><label className={etiqueta}>Sexo</label>
+            <select value={f.sexo} onChange={(e) => set('sexo', e.target.value)} className={campo}>{OPC.sexo.map((o) => <option key={o}>{o}</option>)}</select></div>
+          <div className="space-y-2"><label className={etiqueta}>Área de residencia</label>
+            <select value={f.area} onChange={(e) => set('area', e.target.value)} className={campo}>{OPC.area.map((o) => <option key={o}>{o}</option>)}</select></div>
+          <div className="space-y-2"><label className={etiqueta}>Provincia</label>
+            <select value={f.provincia} onChange={(e) => set('provincia', e.target.value)} className={campo}>
+              <option value="">No informada</option><option value="18">Tungurahua</option></select></div>
+          <div className="space-y-2"><label className={etiqueta}>Peso al nacer (gramos)</label>
+            <input type="number" min={500} max={6000} value={f.peso_nacer_gramos} onChange={(e) => set('peso_nacer_gramos', Number(e.target.value))} className={campo} /></div>
+          <div className="space-y-2"><label className={etiqueta}>Talla al nacer (cm)</label>
+            <input type="number" min={25} max={65} value={f.talla_nacer_cm} onChange={(e) => set('talla_nacer_cm', Number(e.target.value))} className={campo} /></div>
+          <div className="space-y-2"><label className={etiqueta}>Edad gestacional al nacer</label>
+            <select value={f.prematuro} onChange={(e) => set('prematuro', e.target.value)} className={campo}>{OPC.prematuro.map((o) => <option key={o}>{o}</option>)}</select></div>
+          <div className="space-y-2"><label className={etiqueta}>Lactancia (meses)</label>
+            <input type="number" min={0} max={59} value={f.lactancia_meses} onChange={(e) => set('lactancia_meses', Number(e.target.value))} className={campo} /></div>
+          <div className="space-y-2"><label className={etiqueta}>Diarrea en las últimas 2 semanas</label>
+            <select value={f.diarrea} onChange={(e) => set('diarrea', e.target.value)} className={campo}>{OPC.diarrea.map((o) => <option key={o}>{o}</option>)}</select></div>
+          <div className="space-y-2"><label className={etiqueta}>Infección respiratoria en las últimas 2 semanas</label>
+            <select value={f.infeccion} onChange={(e) => set('infeccion', e.target.value)} className={campo}>{OPC.infeccion.map((o) => <option key={o}>{o}</option>)}</select></div>
+        </div>
+        {error && <div className="text-red-600 text-sm">{error}</div>}
+        <button type="submit" disabled={loading || features.length === 0}
+                className="w-full bg-blue-600 text-white font-semibold py-3 rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors">
+          {loading ? 'Calculando…' : 'Calcular clasificación estimada'}
+        </button>
+      </form>
     </div>
   );
 };
