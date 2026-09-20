@@ -1,0 +1,127 @@
+\begingroup
+\tiny\setlength{\tabcolsep}{2.5pt}\arrayrulecolor{black!55}\renewcommand{\arraystretch}{1.1}
+\begin{longtable}{|r|p{3.1cm}|c|r|p{3.0cm}|p{3.8cm}|}
+  \caption{Diccionario de las variables predictoras. \% nulos: porcentaje de valores ausentes en la base original antes de la imputación.}
+  \label{tab:diccionario}\\ \hline
+  \enc{N.º} & \enc{Variable} & \enc{Tipo} & \enc{\% nulos} & \enc{Rango o categorías} & \enc{Etiqueta original (ENSANUT)} \\ \hline
+  \endfirsthead
+  \tablacont{6}\hline
+  \enc{N.º} & \enc{Variable} & \enc{Tipo} & \enc{\% nulos} & \enc{Rango o categorías} & \enc{Etiqueta original (ENSANUT)} \\ \hline
+  \endhead
+  \hline\endfoot
+  1 & \texttt{area} & Cat. & 0.0 & 2 cat.: Urbano; Rural & Área \\ \hline
+  2 & \texttt{provincia} & Num. & 0.0 & 1 a 90 & Provincia \\ \hline
+  3 & \texttt{orden\_hijo} & Num. & 0.0 & 1 a 3 & Orden del hijo \\ \hline
+  4 & \texttt{sexo} & Cat. & 0.0 & 2 cat.: Hombre; Mujer & Sexo \\ \hline
+  5 & \texttt{embarazo\_planeado} & Cat. & 0.0 & 4 cat.: Tener Ese Hijo?; Quería Esperar Mas T; … & 403.  En la época en la que quedó embarazada de (…), quería U… \\ \hline
+  6 & \texttt{embarazo\_deseado\_pareja} & Cat. & 0.0 & 4 cat.: Tener Ese Hijo?; Quería Esperar Mas T; … & 405.  ¿Quería su pareja: \\ \hline
+  7 & \texttt{control\_prenatal} & Cat. & 0.0 & 2 cat.: Si; No & 406.  ¿Tuvo algún control prenatal cuando estaba embarazada d… \\ \hline
+  8 & \texttt{lugar\_control\_prenatal} & Cat. & 4.2 & 10 cat.: Establecimientos De ; Clínica/Consultorio ; … & 407.a ¿Dónde se hizo el control con mayor frecuencia? \\ \hline
+  9 & \texttt{consumo\_micronutrientes\_embarazo} & Cat. & 4.2 & 4 cat.: Hierro Más Ácido Fól; Hierro?; … & 408.  ¿Consumió algún micronutriente durante el embarazo como: \\ \hline
+  10 & \texttt{frecuencia\_micronutrientes} & Cat. & 6.3 & 3 cat.: Diaria; Pasando Un Día; … & 409.a ¿Con qué frecuencia tomaba Los micronutrientes? \\ \hline
+  11 & \texttt{control\_peso\_embarazo} & Cat. & 4.2 & 3 cat.: Si; No; … & 410.  ¿Durante el embarazo le pesaron? \\ \hline
+  12 & \texttt{medicion\_altura\_uterina} & Cat. & 4.2 & 3 cat.: Si; No; … & 411.  ¿Durante el embarazo le midieron la barriga? \\ \hline
+  13 & \texttt{examen\_vih\_embarazo} & Cat. & 4.2 & 3 cat.: Si; No; … & 412.a ¿Durante el embarazo le hicieron un examen de VIH? \\ \hline
+  14 & \texttt{numero\_examenes\_vih} & Num. & 13.3 & 1 a 88 & 412.b Cuántos? \\ \hline
+  15 & \texttt{control\_presion\_embarazo} & Cat. & 4.2 & 3 cat.: Si; No; … & 413.  ¿Durante el embarazo ¿le tomaron la presión? \\ \hline
+  16 & \texttt{examen\_sangre\_embarazo} & Cat. & 4.2 & 3 cat.: Si; No; … & 414.  ¿Durante el embarazo ¿hicieron un examen de sangre? \\ \hline
+  17 & \texttt{examen\_orina\_embarazo} & Cat. & 4.2 & 3 cat.: Si; No; … & 415.  ¿Durante el embarazo ¿hicieron un examen de orina? \\ \hline
+  18 & \texttt{examen\_sifilis\_embarazo} & Cat. & 4.2 & 3 cat.: Si; No Sabe / No Respond; … & 416.  ¿Durante el embarazo ¿hicieron un examen de sífilis? \\ \hline
+  19 & \texttt{vacuna\_tetanos} & Cat. & 4.2 & 3 cat.: Si; No; … & 417.  ¿Durante el embarazo ¿le vacunaron contra el tétanos? \\ \hline
+  20 & \texttt{dosis\_tetanos} & Num. & 13.6 & 1 a 99 & 418.  ¿Cuántas veces le vacunaron contra el tétanos? \\ \hline
+  21 & \texttt{consejeria\_embarazo} & Cat. & 4.2 & 3 cat.: Si; No; … & 419.a ¿Durante el control del embarazo, recibió consejería o … \\ \hline
+  22 & \texttt{consejeria\_micronutrientes} & Cat. & 4.2 & 3 cat.: Si; No; … & 419.b Uso de micronutrientes (hierro, ácido fólico)? \\ \hline
+  23 & \texttt{consejeria\_signos\_alarma} & Cat. & 4.2 & 3 cat.: Si; No; … & 419.c Signos de alarma del embarazo (sangrado vaginal, falta … \\ \hline
+  24 & \texttt{consejeria\_higiene\_alimentos} & Cat. & 4.2 & 3 cat.: Si; No; … & 419.d Higiene en preparación de alimentos? \\ \hline
+  25 & \texttt{consejeria\_lavado\_manos} & Cat. & 4.2 & 3 cat.: Si; No; … & 419.e Lavado de manos? \\ \hline
+  26 & \texttt{consejeria\_anticonceptivos} & Cat. & 4.2 & 3 cat.: Si; No; … & 419.f Métodos anticonceptivos? \\ \hline
+  27 & \texttt{consejeria\_apego\_lactancia} & Cat. & 4.2 & 3 cat.: Si; No; … & 419.g El apego inmediato, lactancia en la primera hora de vid… \\ \hline
+  28 & \texttt{semanas\_primer\_control} & Num. & 4.2 & 0 a 40 & 420.  ¿Cuántas semanas de embarazo tenía cuando le hicieron e… \\ \hline
+  29 & \texttt{numero\_controles\_prenatales} & Num. & 4.2 & 0 a 88 & 421.  En total, ¿cuántos controles tuvo antes del parto? \\ \hline
+  30 & \texttt{lugar\_parto} & Cat. & 0.0 & 9 cat.: Establecimientos De ; Clínica/Consultorio ; … & 423.a ¿En que lugar tuvo el parto de (..).? \\ \hline
+  31 & \texttt{personal\_parto} & Cat. & 0.0 & 8 cat.: Médico; Obstetriz; … & 424.  ¿Qué persona ó profesional le tendió? \\ \hline
+  32 & \texttt{tipo\_parto} & Cat. & 0.0 & 2 cat.: Normal (Vaginal); Césaria & 425.  El parto de (...) fue: \\ \hline
+  33 & \texttt{prematuro} & Cat. & 0.0 & 4 cat.: A Tiempo; Prematuro; … & 426.  ¿El nacimiento de (...) fue a los 9 meses o antes de ti… \\ \hline
+  34 & \texttt{peso\_registrado\_nacer} & Cat. & 0.0 & 2 cat.: Si; No & 428.  ¿Le pesaron a (…) en el momento de nacer o en los prime… \\ \hline
+  35 & \texttt{tamizaje\_neonatal} & Cat. & 0.0 & 2 cat.: Si; No & 429.  ¿Le Realizaron a (…) La prueba del Tamizaje Neonatal (p… \\ \hline
+  36 & \texttt{bano\_antes\_24h} & Cat. & 0.0 & 3 cat.: Si; No; … & 430.  ¿Le bañaron a (…) antes de cumplir 24 horas de su nacim… \\ \hline
+  37 & \texttt{corte\_oportuno\_cordon} & Cat. & 0.0 & 3 cat.: Si; No sabe; … & 431.  ¿Esperaron al menos un minuto para realizar el corte de… \\ \hline
+  38 & \texttt{carne\_salud\_infantil} & Cat. & 0.0 & 3 cat.: Si; Si Le Entregaron Per; … & 432.  Tiene usted el carné de salud infantil o libreta integr… \\ \hline
+  39 & \texttt{registro\_curva\_crecimiento} & Cat. & 37.8 & 2 cat.: No; Si & 433.a ENCUESTADOR/A OBSERVE SI EL CARNÉ REGISTRA PUNTOS EN LA… \\ \hline
+  40 & \texttt{registro\_talla\_nacer} & Cat. & 37.8 & 2 cat.: Si; No & 434.a ENCUESTADOR/A OBSERVE SI EL CARNÉ REGISTRA: TALLA AL NACER \\ \hline
+  41 & \texttt{talla\_nacer\_cm} & Num. & 57.3 & 0.42 a 5000 & 434.b cm \\ \hline
+  42 & \texttt{registro\_perimetro\_cefalico} & Cat. & 37.8 & 2 cat.: Si; No & 435.a ENCUESTADOR/A OBSERVE SI EL CARNÉ REGISTRA PERÍMETRO CE… \\ \hline
+  43 & \texttt{perimetro\_cefalico\_cm} & Num. & 62.8 & 1 a 2603 & 435.b cm \\ \hline
+  44 & \texttt{registro\_peso\_nacer} & Cat. & 37.8 & 2 cat.: Si; No & 436.a ENCUESTADOR/A OBSERVE SI EL CARNÉ REGISTRA:PESO AL NACER \\ \hline
+  45 & \texttt{peso\_nacer\_gramos} & Num. & 56.1 & 7 a 9800 & 436.b gramos \\ \hline
+  46 & \texttt{peso\_nacer\_reportado} & Cat. & 43.9 & 4 cat.: No sabe; Gramos; … & 437.a ¿Cuánto pesó (…)? \\ \hline
+  47 & \texttt{bajo\_peso\_nacer} & Cat. & 63.8 & 3 cat.: No sabe; No; … & 438.  ¿(…) Peso menos de 5.5 Libras, 2.5 Kilogramos o 2500 gr… \\ \hline
+  48 & \texttt{tamano\_recien\_nacido} & Cat. & 0.0 & 5 cat.: Igual; Más Grande; … & 439.  En comparación con otros niños recién nacidos, ¿cómo co… \\ \hline
+  49 & \texttt{control\_posparto} & Cat. & 0.0 & 2 cat.: Si; No & 440.  ¿Tuvo usted algún control después del parto de (...)? \\ \hline
+  50 & \texttt{tiempo\_primer\_control\_posparto} & Num. & 38.3 & 0 a 45 & 441.a ¿Cuánto tiempo después del parto de (...) tuvo su prime… \\ \hline
+  51 & \texttt{lugar\_control\_posparto} & Cat. & 38.3 & 10 cat.: Establecimientos De ; Clínica/Consultorio ; … & 442.  ¿Dónde tuvo el control de post parto? \\ \hline
+  52 & \texttt{control\_medico\_nino} & Cat. & 0.0 & 2 cat.: Si; No & 448.  ¿Después de que nació (...), le llevó para control médico? \\ \hline
+  53 & \texttt{tiempo\_primer\_control\_nino} & Num. & 4.1 & 0 a 77 & 449.  ¿Qué tiempo después de nacido (…), le llevó al control … \\ \hline
+  54 & \texttt{motivo\_control\_nino} & Cat. & 4.1 & 3 cat.: ¿Para Control Niño S; ¿Estaba Enfermo?; … & 450.  ¿Porqué o para qué le llevó a (…): \\ \hline
+  55 & \texttt{controles\_0\_1\_anio} & Num. & 16.6 & 0 a 88 & 451.a ¿De 0 a menos de 1 años ? \\ \hline
+  56 & \texttt{controles\_1\_2\_anios} & Num. & 16.6 & 0 a 88 & 451.b ¿De 1 año a menos de 2 años ? \\ \hline
+  57 & \texttt{controles\_2\_5\_anios} & Num. & 16.6 & 0 a 99 & 451.c ¿De 2 años a menos de 5 años ? \\ \hline
+  58 & \texttt{numero\_controles\_carnet} & Num. & 16.6 & 0 a 24 & 451.a N° de controles en el carnet Último nacido vivo \\ \hline
+  59 & \texttt{establecimiento\_salud} & Cat. & 4.1 & 10 cat.: Establecimientos De ; Clínica/Consultorio ; … & 452.  ¿A qué establecimiento o proveedor de salud llevó a (…)? \\ \hline
+  60 & \texttt{consejeria\_lactancia} & Cat. & 4.1 & 3 cat.: Si; No; … & 453.a ¿Durante el control del niño, recibió consejería/asesor… \\ \hline
+  61 & \texttt{consejeria\_micronutrientes\_nino} & Cat. & 4.1 & 3 cat.: Si; No; … & 453.b Uso de micronutrientes? \\ \hline
+  62 & \texttt{consejeria\_alimentacion\_complementaria} & Cat. & 4.1 & 3 cat.: Si; No; … & 453.c Alimentación complementaria? \\ \hline
+  63 & \texttt{consejeria\_higiene\_nino} & Cat. & 4.1 & 3 cat.: Si; No; … & 453.d Higiene en preparación de alimentos? \\ \hline
+  64 & \texttt{consejeria\_lavado\_manos\_nino} & Cat. & 4.1 & 3 cat.: Si; No; … & 453.e Lavado de manos? \\ \hline
+  65 & \texttt{consejeria\_anticonceptivos\_nino} & Cat. & 4.1 & 3 cat.: Si; No; … & 453.f Métodos anticonceptivos? \\ \hline
+  66 & \texttt{consejeria\_desarrollo\_infantil} & Cat. & 4.1 & 3 cat.: Si; No; … & 453.g Desarrollo del niño? \\ \hline
+  67 & \texttt{lactancia\_anios} & Num. & 0.0 & 0 a 77 & 454.  ¿Hasta que edad le dio el seno (leche materna) a (..)?:… \\ \hline
+  68 & \texttt{lactancia\_meses} & Num. & 0.0 & 0 a 77 & 454.  ¿Hasta que edad le dio el seno (leche materna) a (..)?:… \\ \hline
+  69 & \texttt{lactancia\_dias} & Num. & 0.0 & 0 a 77 & 454.  ¿Hasta que edad le dio el seno (leche materna) a (..)?:… \\ \hline
+  70 & \texttt{nino\_vive} & Cat. & 0.0 & 1 cat.: Si & 455.  SEÑOR ENCUESTADOR: VEA PREGUNTA 402 ¿Está vivo? \\ \hline
+  71 & \texttt{vive\_con\_madre} & Cat. & 0.0 & 2 cat.: Si; No & 456.  ¿Vive (…), con usted actualmente? \\ \hline
+  72 & \texttt{diarrea\_ultimas\_2\_semanas} & Cat. & 0.6 & 3 cat.: No; Si; … & 457.  ¿Ha tenido diarrea (…) en las ultimas dos semanas (incl… \\ \hline
+  73 & \texttt{infeccion\_respiratoria\_2\_semanas} & Cat. & 0.6 & 2 cat.: No; Si & 473.  ¿En las últimas dos semanas ha tenido (...),tos, moquer… \\ \hline
+  74 & \texttt{desparasitacion\_6\_meses} & Cat. & 0.6 & 2 cat.: No; Si & 482.  ¿Le dio a (…) algún desparasitante durante los últimos … \\ \hline
+  75 & \texttt{hierro\_polvo\_12\_meses} & Cat. & 0.6 & 2 cat.: No; Si & 483.  En los últimos 12 meses, (…) Recibió del personal de Sa… \\ \hline
+  76 & \texttt{hierro\_otra\_presentacion} & Cat. & 0.6 & 2 cat.: No; Si & 485.  En los últimos 12 meses, (…) Recibió del personal de sa… \\ \hline
+  77 & \texttt{vitamina\_a\_12\_meses} & Cat. & 0.6 & 2 cat.: No; Si & 486.  En los últimos 12 meses, (…) Recibió del personal salud… \\ \hline
+  78 & \texttt{vacuna\_bcg\_carnet} & Cat. & 23.8 & 2 cat.: Si; No & 487.1 BCG - según carnet, tiene dosís? \\ \hline
+  79 & \texttt{vacuna\_hepatitis\_b\_carnet} & Cat. & 23.7 & 2 cat.: Si; No & 487.2 HEPATITIS B - según carnet, tiene dosís? \\ \hline
+  80 & \texttt{vacuna\_rotavirus\_1\_carnet} & Cat. & 23.7 & 2 cat.: Si; No & 487.3 ROTAVIRUS 1 - según carnet, tiene dosís? \\ \hline
+  81 & \texttt{vacuna\_rotavirus\_2\_carnet} & Cat. & 23.7 & 2 cat.: Si; No & 487.4 ROTAVIRUS 2 - según carnet, tiene dosís? \\ \hline
+  82 & \texttt{vacuna\_pentavalente\_1\_carnet} & Cat. & 23.7 & 2 cat.: Si; No & 487.5 PENTAVALENTE 1 - según carnet, tiene dosís? \\ \hline
+  83 & \texttt{vacuna\_pentavalente\_2\_carnet} & Cat. & 23.7 & 2 cat.: Si; No & 487.6 PENTAVALENTE 2 - según carnet, tiene dosís? \\ \hline
+  84 & \texttt{vacuna\_pentavalente\_3\_carnet} & Cat. & 23.7 & 2 cat.: Si; No & 487.7 PENTAVALENTE 3 - según carnet, tiene dosís? \\ \hline
+  85 & \texttt{vacuna\_ipv\_1\_carnet} & Cat. & 23.7 & 2 cat.: Si; No & 487.7 IPV 1 - según carnet, tiene dosís? \\ \hline
+  86 & \texttt{vacuna\_opv\_2\_carnet} & Cat. & 23.7 & 2 cat.: Si; No & 487.9 OPV 2 - según carnet, tiene dosís? \\ \hline
+  87 & \texttt{vacuna\_opv\_3\_carnet} & Cat. & 23.7 & 2 cat.: Si; No & 487.10 OPV 3 - según carnet, tiene dosís? \\ \hline
+  88 & \texttt{vacuna\_neumococo\_1\_carnet} & Cat. & 23.7 & 2 cat.: Si; No & 487.11 NEUMOCOCO CJ 1 - según carnet, tiene dosís? \\ \hline
+  89 & \texttt{vacuna\_neumococo\_2\_carnet} & Cat. & 23.7 & 2 cat.: Si; No & 487.12 NEUMOCOCO CJ 2 - según carnet, tiene dosís? \\ \hline
+  90 & \texttt{vacuna\_neumococo\_3\_carnet} & Cat. & 23.7 & 2 cat.: Si; No & 487.13 NEUMOCOCO CJ 3 - según carnet, tiene dosís? \\ \hline
+  91 & \texttt{vacuna\_srp\_1\_carnet} & Cat. & 23.7 & 2 cat.: Si; No & 487.14 SRP 1 - según carnet, tiene dosís? \\ \hline
+  92 & \texttt{vacuna\_srp\_2\_carnet} & Cat. & 23.7 & 2 cat.: No; Si & 487.15 SRP 2 - según carnet, tiene dosís? \\ \hline
+  93 & \texttt{lugar\_vacuna\_bcg} & Cat. & 0.6 & 12 cat.: Establecimientos De ; No Sabe/ No Responde; … & 487.A1 BCG - Recibió en el: \\ \hline
+  94 & \texttt{lugar\_vacuna\_hepatitis\_b} & Cat. & 0.6 & 12 cat.: Establecimientos De ; Aún No La Recibe; … & 487.A2 HEPATITIS B - Recibió en el: \\ \hline
+  95 & \texttt{lugar\_vacuna\_rotavirus\_1} & Cat. & 0.6 & 12 cat.: Establecimientos De ; Aún No La Recibe; … & 487.A3 ROTAVIRUS 1 - Recibió en el: \\ \hline
+  96 & \texttt{lugar\_vacuna\_rotavirus\_2} & Cat. & 0.6 & 12 cat.: Establecimientos De ; Aún No La Recibe; … & 487.A4 ROTAVIRUS 2 - Recibió en el: \\ \hline
+  97 & \texttt{lugar\_vacuna\_pentavalente\_1} & Cat. & 0.6 & 12 cat.: Establecimientos De ; Aún No La Recibe; … & 487.A5 PENTAVALENTE 1 - Recibió en el: \\ \hline
+  98 & \texttt{lugar\_vacuna\_pentavalente\_2} & Cat. & 0.6 & 12 cat.: Establecimientos De ; Aún No La Recibe; … & 487.A6 PENTAVALENTE 2 - Recibió en el: \\ \hline
+  99 & \texttt{lugar\_vacuna\_pentavalente\_3} & Cat. & 0.6 & 12 cat.: Establecimientos De ; Aún No La Recibe; … & 487.A7 PENTAVALENTE 3 - Recibió en el: \\ \hline
+  100 & \texttt{lugar\_vacuna\_ipv\_1} & Cat. & 0.6 & 12 cat.: Establecimientos De ; Aún No La Recibe; … & 487.A8 IPV 1 - Recibió en el: \\ \hline
+  101 & \texttt{lugar\_vacuna\_opv\_2} & Cat. & 0.6 & 12 cat.: Establecimientos De ; Aún No La Recibe; … & 487.A9 OPV 2 - Recibió en el: \\ \hline
+  102 & \texttt{lugar\_vacuna\_opv\_3} & Cat. & 0.6 & 12 cat.: Establecimientos De ; Aún No La Recibe; … & 487.A10 OPV 3 - Recibió en el: \\ \hline
+  103 & \texttt{lugar\_vacuna\_neumococo\_1} & Cat. & 0.6 & 12 cat.: Establecimientos De ; Aún No La Recibe; … & 487.A11 NEUMOCOCO CJ 1 - Recibió en el: \\ \hline
+  104 & \texttt{lugar\_vacuna\_neumococo\_2} & Cat. & 0.6 & 12 cat.: Establecimientos De ; Aún No La Recibe; … & 487.A12 NEUMOCOCO CJ 2 - Recibió en el: \\ \hline
+  105 & \texttt{lugar\_vacuna\_neumococo\_3} & Cat. & 0.7 & 12 cat.: Establecimientos De ; Aún No La Recibe; … & 487.A13 NEUMOCOCO CJ 3 - Recibió en el: \\ \hline
+  106 & \texttt{lugar\_vacuna\_srp\_1} & Cat. & 0.7 & 12 cat.: Establecimientos De ; Aún No La Recibe; … & 487.A14 SRP 1 - Recibió en el: \\ \hline
+  107 & \texttt{lugar\_vacuna\_srp\_2} & Cat. & 0.7 & 12 cat.: Establecimientos De ; Aún No La Recibe; … & 487.A15 SRP 2 - Recibió en el: \\ \hline
+  108 & \texttt{region\_madre} & Cat. & 0.0 & 4 cat.: Sierra; Costa; … & Región de la mef \\ \hline
+  109 & \texttt{etnia\_madre} & Cat. & 0.0 & 5 cat.: Mestizo; Indígena; … & Identificación étnica de la mef \\ \hline
+  110 & \texttt{edad\_meses} & Num. & 0.0 & 0 a 59 & Edad en meses \\ \hline
+  111 & \texttt{grupo\_edad\_meses} & Cat. & 0.0 & 8 cat.: 48-59; 0-11; … & Grupo edad en meses \\ \hline
+  112 & \texttt{nivel\_instruccion\_madre} & Cat. & 0.0 & 4 cat.: Educación Media/Bach; Educación Básica; … & Nivel de instrucción de la mef \\ \hline
+  113 & \texttt{factor\_expansion} & Num. & 0.0 & 2.862 a 1403 & Factor de expansión \\ \hline
+  114 & \texttt{estrato} & Num. & 0.0 & 111 a 9023 & Estratos \\ \hline
+\end{longtable}
+\endgroup

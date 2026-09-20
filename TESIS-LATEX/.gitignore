@@ -1,0 +1,18 @@
+# Archivos auxiliares de LaTeX (se regeneran con compilar.bat)
+*.aux
+*.log
+*.toc
+*.lof
+*.lot
+*.out
+*.bbl
+*.blg
+*.bcf
+*.run.xml
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+# El PDF compilado se entrega aparte (el repositorio ignora *.pdf)
+main.pdf
+*.loa
+*.loe
