@@ -11,7 +11,7 @@ const pageTransition = {
   type: 'tween',
   ease: 'anticipate',
   duration: 0.4
-};
+} as const;
 
 const PageWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
