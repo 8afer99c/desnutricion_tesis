@@ -11,7 +11,7 @@ Se desarrolló y evaluó un prototipo académico de clasificación de la desnutr
 
 \noindent\hspace*{\parindent}\textbf{Objetivo 4: API y tablero.} Se implementó una API REST con nueve servicios, que valida las 114 variables de entrada, y un tablero web que consume la API para consultar indicadores, métricas y predicciones.
 
-\noindent\hspace*{\parindent}\textbf{Objetivo 5: validación funcional y limitaciones.} Las 5 pruebas automáticas y 15 de los 17 casos de prueba se cumplieron (fallaron el envío de un Excel a la API y la variación de la puntuación del formulario individual), y la latencia mediana fue de 29 ms en ejecución local. Estas pruebas verifican el funcionamiento del software y no la validez predictiva ni clínica. Se identificó que el nivel de riesgo puede contradecir la clase asignada, que el resumen del tablero usa predicciones sobre datos de entrenamiento, que la puntuación del formulario individual casi no varía con los datos porque el resto de las variables se imputa, y que la API no tiene autenticación.
+\noindent\hspace*{\parindent}\textbf{Objetivo 5: validación funcional y limitaciones.} Las 8 pruebas automáticas y 15 de los 17 casos de prueba se cumplieron (fallaron el envío de un Excel a la API y la variación de la puntuación del formulario individual), y la latencia mediana fue de 29 ms en ejecución local. Estas pruebas verifican el funcionamiento del software y no la validez predictiva ni clínica. Se identificó que el nivel de riesgo contradecía la clase asignada (corregido: BAJO coincide ahora con la clase 0), que el resumen del tablero usa predicciones sobre datos de entrenamiento, que la puntuación del formulario individual casi no varía con los datos porque el resto de las variables se imputa, y que la API no tiene autenticación.
 
 \subsection{Limitaciones}
 \begin{itemize}
@@ -32,7 +32,6 @@ Se desarrolló y evaluó un prototipo académico de clasificación de la desnutr
 \section{Recomendaciones y Trabajos Futuros}
 \subsection{Recomendaciones inmediatas}
 \begin{itemize}
-  \item \textbf{Alinear la clase y el nivel de riesgo:} usar los mismos cortes para ambos o definir el riesgo a partir del umbral de 0.42.
   \item \textbf{Corregir el resumen del tablero:} calcular los indicadores con los datos observados o con el conjunto de prueba, no con predicciones sobre datos de entrenamiento.
   \item \textbf{Corregir la lectura de archivos en la API:} aceptar Excel o rechazarlo con un error controlado.
   \item \textbf{Decidir el futuro del formulario individual:} mantenerlo solo como ilustración o reemplazarlo por una carga de un registro completo.

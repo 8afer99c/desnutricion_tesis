@@ -25,6 +25,6 @@ subgrupos, prueba sin variables de diseño, importancia, diccionario y pruebas d
 6. URLs públicas de la API y del dashboard (Anexo B.2). (Repositorio y hash ya documentados en Anexo E; `LIMPIEZA.ipynb` recuperado del commit 1b4b767: imputación con moda/mediana sobre la base completa.)
 
 ## Hallazgos del prototipo/datos (ya documentados en cap. III–IV)
-Riesgo BAJO con clase 1; `/dashboard` resume predicciones sobre datos de entrenamiento; sin autenticación;
+Riesgo BAJO con clase 1 (CORREGIDO en 7b37205 / 588d8fe: BAJO <=> clase 0, ALTO desde 0.60); `/dashboard` resume predicciones sobre datos de entrenamiento; sin autenticación;
 formulario individual rellena 106 variables con 0 (siempre clase 1); `.xlsx` → excepción; 84/114 predictores con
 nulos originales imputados antes de la partición; sensibilidad muy distinta por área/edad; Brier peor que la prevalencia.
