@@ -7,7 +7,7 @@ import json
 import pandas as pd
 import numpy as np
 
-from app.config import BASE_DIR, DATA_PATH, MODEL_VERSION
+from app.config import BASE_DIR, DATA_PATH, MODEL_VERSION, RIESGO_ALTO_DESDE, UMBRAL_DECISION
 from app.predictor import Predictor
 
 METRICS_PATH = BASE_DIR / "models" / "metricas_v2.json"
@@ -138,18 +138,18 @@ class Analytics:
 
 
         alto = int(
-            (probabilidades >= 0.80).sum()
+            (probabilidades >= RIESGO_ALTO_DESDE).sum()
         )
 
 
         medio = int(
-            ((probabilidades >=0.50) &
-             (probabilidades <0.80)).sum()
+            ((probabilidades >= UMBRAL_DECISION) &
+             (probabilidades < RIESGO_ALTO_DESDE)).sum()
         )
 
 
         bajo = int(
-            (probabilidades <0.50).sum()
+            (probabilidades < UMBRAL_DECISION).sum()
         )
 
 

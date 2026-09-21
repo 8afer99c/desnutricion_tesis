@@ -21,7 +21,8 @@ from app.schemas import (
 from app.config import (
     API_TITLE,
     API_DESCRIPTION,
-    API_VERSION
+    API_VERSION,
+    nivel_riesgo
 )
 
 app = FastAPI(
@@ -151,19 +152,7 @@ def predict(
 
     # Clasificación del riesgo
 
-    if probabilidad >= 0.80:
-
-        riesgo = "ALTO"
-
-
-    elif probabilidad >= 0.50:
-
-        riesgo = "MEDIO"
-
-
-    else:
-
-        riesgo = "BAJO"
+    riesgo = nivel_riesgo(probabilidad)
 
 
 
