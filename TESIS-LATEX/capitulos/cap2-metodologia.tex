@@ -271,7 +271,7 @@ La Tabla~\ref{tab:api} presenta los servicios expuestos. Las respuestas de \text
     \texttt{/features} & GET & Ninguna & Número y lista de variables del modelo\\ \hline
     \texttt{/predict} & POST & JSON con las 114 variables & Clase, probabilidad y riesgo; HTTP 400 si no coinciden\\ \hline
     \texttt{/predict-file} & POST & Archivo (formulario multipart) & Archivo \texttt{.xlsx} con predicciones\\ \hline
-    \texttt{/dashboard} & GET & Provincia opcional (nombre) & Registros, casos y porcentaje\\ \hline
+    \texttt{/dashboard} & GET & Provincia opcional (nombre) & Registros de prueba, casos observados y clasificados, sensibilidad y precisión\\ \hline
     \texttt{/dashboard/}\allowbreak\texttt{metricas} & GET & Ninguna & Métricas del modelo (v2)\\ \hline
     \texttt{/dashboard/}\allowbreak\texttt{importancia} & GET & Ninguna & Importancia por variable\\ \hline
     \texttt{/docs} & GET & Ninguna & Documentación interactiva (OpenAPI)\\ \hline
