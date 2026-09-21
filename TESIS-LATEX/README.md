@@ -26,5 +26,5 @@ subgrupos, prueba sin variables de diseño, importancia, diccionario y pruebas d
 
 ## Hallazgos del prototipo/datos (ya documentados en cap. III–IV)
 Riesgo BAJO con clase 1 (CORREGIDO en 7b37205 / 588d8fe: BAJO <=> clase 0, ALTO desde 0.60); `/dashboard` resumía predicciones sobre datos de entrenamiento (CORREGIDO en d785b95 / edf40ae: usa el conjunto de prueba); sin autenticación;
-formulario individual rellena 106 variables con 0 (siempre clase 1); `.xlsx` → excepción; 84/114 predictores con
+formulario individual rellena 106 variables con 0 (siempre clase 1); `.xlsx` → excepción (CORREGIDO en db5a77f / 89a23d5: lectura controlada de CSV y Excel); 84/114 predictores con
 nulos originales imputados antes de la partición; sensibilidad muy distinta por área/edad; Brier peor que la prevalencia.

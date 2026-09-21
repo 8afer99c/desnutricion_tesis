@@ -25,7 +25,7 @@
     \texttt{app/utils.py} & Validación de variables y catálogo de provincias\\ \hline
     \texttt{models/} & \texttt{modelo\_v2.joblib}, \texttt{modelo\_final\_api.joblib} (v1) y \texttt{metricas\_v2.json}\\ \hline
     \texttt{data/} & Conjunto de prueba (\texttt{test\_v2.csv}) que usa el resumen del tablero y otros datos del proyecto\\ \hline
-    \texttt{tests/} & Pruebas de contrato de la API, de las métricas, del nivel de riesgo y del resumen del tablero\\ \hline
+    \texttt{tests/} & Pruebas de contrato de la API, de las métricas, del nivel de riesgo, del resumen del tablero y de la lectura de archivos\\ \hline
   \end{tabular}
 \end{table}
 
@@ -222,7 +222,7 @@ Muestra las métricas de la clase con desnutrición crónica en el conjunto de p
 %% ----------------------------------------------------------------- ANEXO C
 \anexo{C}{Evidencias de Pruebas del Sistema}
 
-Las pruebas de la API se ejecutaron el 20 de septiembre de 2026 sobre el backend en ejecución local (\textit{TestClient} de FastAPI, modelo v2), con un registro real del conjunto de prueba como entrada. Las pruebas del tablero (CP15 a CP17) se ejecutaron el mismo día en un navegador automatizado (Playwright) sobre la interfaz ya corregida. Además se ejecutaron las 13 pruebas automáticas del repositorio (5 de contrato, 3 del nivel de riesgo y 5 del resumen del tablero), todas aprobadas.
+Las pruebas de la API se ejecutaron el 20 de septiembre de 2026 sobre el backend en ejecución local (\textit{TestClient} de FastAPI, modelo v2), con un registro real del conjunto de prueba como entrada. Las pruebas del tablero (CP15 a CP17) se ejecutaron el mismo día en un navegador automatizado (Playwright) sobre la interfaz ya corregida. Además se ejecutaron las 21 pruebas automáticas del repositorio (5 de contrato, 3 del nivel de riesgo, 5 del resumen del tablero y 8 de la lectura de archivos), todas aprobadas.
 
 \begingroup
 \scriptsize\setlength{\tabcolsep}{3pt}\arrayrulecolor{black!55}\renewcommand{\arraystretch}{1.1}
@@ -248,16 +248,16 @@ Las pruebas de la API se ejecutaron el 20 de septiembre de 2026 sobre el backend
   CP11 & Métricas del modelo & \texttt{GET /dashboard/}\allowbreak\texttt{metricas} & Valores de \texttt{metricas\_v2.json} & HTTP 200; valores idénticos & Pasa\\ \hline
   CP12 & Importancia de variables & \texttt{GET /dashboard/}\allowbreak\texttt{importancia} & HTTP 200 con lista & HTTP 200; lista de variables & Pasa\\ \hline
   CP13 & Documentación & \texttt{GET /docs} & HTTP 200 & HTTP 200 & Pasa\\ \hline
-  CP14 & Archivo Excel en predicción masiva & \texttt{POST /predict-file} con un \texttt{.xlsx} & Resultado o mensaje de error controlado & Excepción no controlada (\texttt{UnicodeDecodeError}) & Falla\\ \hline
+  CP14 & Archivo Excel en predicción masiva & \texttt{POST /predict-file} con un \texttt{.xlsx} & Resultado o mensaje de error controlado & HTTP 200; \texttt{.xlsx} de 50 filas. Un Excel dañado, un \texttt{.xls} o un archivo vacío devuelven un mensaje de error & Pasa (ver nota)\\ \hline
   CP15 & Formulario individual & 512 combinaciones de los 10 datos, resto nulo (formulario corregido) & Probabilidades que varíen según los datos & Entre 0.375 y 0.515; \SI{85.5}{\percent} con clase 1 (la versión inicial: 0.436--0.512, todas con clase 1) & Falla\\ \hline
   CP16 & Tablero: CSV incompleto & CSV de 5 registros con 100 de 114 columnas & Mensaje claro con columnas faltantes; sin descarga & Mensaje con las columnas faltantes; sin descarga & Pasa\\ \hline
   CP17 & Tablero: CSV válido & CSV de 50 registros del conjunto de prueba & Descarga de \texttt{.xlsx} de 50 filas & \texttt{resultado\_clasificacion.xlsx} con 50 filas y columnas \texttt{prediccion}, \texttt{probabilidad} y \texttt{riesgo} & Pasa\\ \hline
 \end{longtable}
 \endgroup
 
-\noindent\textbf{Notas.} En CP4, con la versión evaluada inicialmente, la clase asignada (1) y el riesgo (BAJO) no coincidían porque usaban cortes distintos; tras alinear el riesgo con el umbral de 0.42 el caso se volvió a ejecutar y devuelve riesgo MEDIO. Con el servicio corregido, los 50 registros de CP17 son consistentes: 25 con riesgo BAJO (todos clase 0), 21 MEDIO y 4 ALTO (todos clase 1). En la versión evaluada inicialmente, CP9 y CP10 devolvían positivos predichos por el modelo sobre un archivo que incluía los datos de entrenamiento (\num{20510} registros y \num{10626} casos predichos a nivel nacional; 580 registros y 293 casos en Tungurahua), no casos observados. El servicio se corrigió para usar el conjunto de prueba y ambos casos se volvieron a ejecutar: los valores de la tabla son los del servicio corregido y reproducen las métricas de \texttt{metricas\_v2.json} (sensibilidad 0.693 y precisión 0.335). CP14 y CP15 se agregaron al descubrir el comportamiento del servicio de archivos y del formulario; CP16 y CP17 verifican la carga de archivos del tablero corregido (Anexo~B).
+\noindent\textbf{Notas.} En CP4, con la versión evaluada inicialmente, la clase asignada (1) y el riesgo (BAJO) no coincidían porque usaban cortes distintos; tras alinear el riesgo con el umbral de 0.42 el caso se volvió a ejecutar y devuelve riesgo MEDIO. Con el servicio corregido, los 50 registros de CP17 son consistentes: 25 con riesgo BAJO (todos clase 0), 21 MEDIO y 4 ALTO (todos clase 1). En la versión evaluada inicialmente, CP9 y CP10 devolvían positivos predichos por el modelo sobre un archivo que incluía los datos de entrenamiento (\num{20510} registros y \num{10626} casos predichos a nivel nacional; 580 registros y 293 casos en Tungurahua), no casos observados. El servicio se corrigió para usar el conjunto de prueba y ambos casos se volvieron a ejecutar: los valores de la tabla son los del servicio corregido y reproducen las métricas de \texttt{metricas\_v2.json} (sensibilidad 0.693 y precisión 0.335). CP14 y CP15 se agregaron al descubrir el comportamiento del servicio de archivos y del formulario. En la versión evaluada inicialmente, CP14 producía una excepción no controlada (\texttt{UnicodeDecodeError}) porque el servicio leía el Excel como CSV; se corrigió (lectura de \texttt{.xlsx} y mensajes de error controlados) y el caso se volvió a ejecutar; CP16 y CP17 verifican la carga de archivos del tablero corregido (Anexo~B).
 
-\noindent\textbf{Resumen.} De los 17 casos, 15 pasan y 2 fallan (CP14 y CP15). Los casos CP1 a CP13 verifican el contrato de la API con datos completos; CP14 muestra una limitación del servicio de archivos y CP15 la escasa variación del formulario individual.
+\noindent\textbf{Resumen.} De los 17 casos, 16 pasan y 1 falla (CP15). Los casos CP1 a CP13 verifican el contrato de la API con datos completos; CP14 verifica el servicio de archivos con Excel (falló en la versión inicial y pasa con el servicio corregido) y CP15 muestra la escasa variación del formulario individual.
 
 \noindent\textbf{Latencia de \texttt{POST /predict}} (100 solicitudes, ejecución local sin red): mediana de 29 ms, percentil 95 de 33 ms y máximo de 38 ms.
 
@@ -274,8 +274,8 @@ Cálculo directo sobre el modelo (sin API): 0.437
 \section*{C.2 Pruebas automáticas del repositorio}
 \begin{lstlisting}[frame=single,basicstyle=\ttfamily\footnotesize]
 $ python -m pytest -q tests
-.............                                   [100%]
-13 passed
+.....................                           [100%]
+21 passed
 \end{lstlisting}
 
 %% ----------------------------------------------------------------- ANEXO D
@@ -320,7 +320,7 @@ $ python -m pytest -q tests
 \section*{E.1 Repositorios}
 El código está en un único repositorio consolidado de GitHub, cuya cuenta propietaria es \texttt{8afer99c}: \url{https://github.com/8afer99c/desnutricion_tesis}. Contiene los notebooks originales, el pipeline corregido (\texttt{pipeline\_v2}), la API y el tablero. Se publicaron dos ramas: \texttt{pipeline-v2-fixes} (rama por defecto del repositorio) y \texttt{main} (rama desplegada). El historial de commits conserva la autoría que Git registró en cada commit.
 
-La versión final del tablero corresponde al commit \texttt{b441664} de \texttt{pipeline-v2-fixes} y a su integración en \texttt{main} (commit \texttt{8df0ade}, 20 de septiembre de 2026). El archivo \texttt{metricas\_v2.json} se versionó en \texttt{45928dd} (\texttt{main}) y \texttt{af4fcf4} (\texttt{pipeline-v2-fixes}), y la corrección del nivel de riesgo de la API está en \texttt{588d8fe} (\texttt{main}) y \texttt{7b37205} (\texttt{pipeline-v2-fixes}). El resumen del tablero con el conjunto de prueba (\texttt{data/test\_v2.csv}) está en \texttt{edf40ae} (\texttt{main}) y \texttt{d785b95} (\texttt{pipeline-v2-fixes}). Los notebooks y el paquete \texttt{pipeline\_v2} se conservan en el historial hasta el commit \texttt{1b4b767}, ya que desde el commit \texttt{bf27226} la reorganización del repositorio los retiró del árbol de archivos actual; se recuperan con \texttt{git show <commit>:<ruta>}.
+La versión final del tablero corresponde al commit \texttt{b441664} de \texttt{pipeline-v2-fixes} y a su integración en \texttt{main} (commit \texttt{8df0ade}, 20 de septiembre de 2026). El archivo \texttt{metricas\_v2.json} se versionó en \texttt{45928dd} (\texttt{main}) y \texttt{af4fcf4} (\texttt{pipeline-v2-fixes}), y la corrección del nivel de riesgo de la API está en \texttt{588d8fe} (\texttt{main}) y \texttt{7b37205} (\texttt{pipeline-v2-fixes}). El resumen del tablero con el conjunto de prueba (\texttt{data/test\_v2.csv}) está en \texttt{edf40ae} (\texttt{main}) y \texttt{d785b95} (\texttt{pipeline-v2-fixes}). La lectura controlada de CSV y Excel en \texttt{/predict-file} está en \texttt{89a23d5} (\texttt{main}) y \texttt{db5a77f} (\texttt{pipeline-v2-fixes}). Los notebooks y el paquete \texttt{pipeline\_v2} se conservan en el historial hasta el commit \texttt{1b4b767}, ya que desde el commit \texttt{bf27226} la reorganización del repositorio los retiró del árbol de archivos actual; se recuperan con \texttt{git show <commit>:<ruta>}.
 
 \section*{E.2 Reproducción de los resultados}
 Desde la carpeta del proyecto, con Python 3.13 y las versiones de la Tabla~\ref{tab:deps}, el pipeline se ejecuta en este orden:
@@ -364,6 +364,7 @@ Los archivos generados quedan en \texttt{pipeline\_v2/output}. Cargar \texttt{mo
   2026-09-20 & \texttt{45928dd}, \texttt{af4fcf4} & Versionar \texttt{metricas\_v2.json} (umbral 0.42 y métricas del modelo v2 en el despliegue)\\ \hline
   2026-09-20 & \texttt{588d8fe}, \texttt{7b37205} & Nivel de riesgo de la API coherente con el umbral de decisión 0.42 (\texttt{main} y \texttt{pipeline-v2-fixes})\\ \hline
   2026-09-20 & \texttt{edf40ae}, \texttt{d785b95} & Resumen del tablero con el conjunto de prueba: casos observados y clasificados, sensibilidad y precisión\\ \hline
+  2026-09-20 & \texttt{89a23d5}, \texttt{db5a77f} & Lectura controlada de CSV y Excel en \texttt{/predict-file}, con mensajes de error para archivos inválidos\\ \hline
 \end{longtable}
 \endgroup
 

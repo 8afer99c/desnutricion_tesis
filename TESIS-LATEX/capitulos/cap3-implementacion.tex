@@ -87,7 +87,7 @@ Se realizaron dos tipos de pruebas, que evalúan aspectos distintos y no deben c
   \item \textbf{Pruebas funcionales de la API:} verifican que el servicio responda según su contrato. Un resultado favorable indica que el software funciona, no que la predicción sea válida clínicamente.
 \end{itemize}
 
-Las pruebas funcionales incluyeron 17 casos (Anexo~C) y las 13 pruebas automáticas del repositorio. Las 13 pruebas y 15 de los 17 casos se cumplieron; fallaron CP14 (archivo Excel enviado directamente a la API) y CP15 (la puntuación del formulario individual casi no varía con los datos). La latencia de \texttt{POST /predict}, medida en 100 solicitudes en ejecución local (sin red), tuvo mediana de 29 ms, percentil 95 de 33 ms y máximo de 38 ms. Como comprobación de consistencia, la probabilidad devuelta por la API para un registro coincidió con la calculada directamente sobre el modelo (0.437).
+Las pruebas funcionales incluyeron 17 casos (Anexo~C) y las 21 pruebas automáticas del repositorio. Las 21 pruebas y 16 de los 17 casos se cumplieron; falló CP15 (la puntuación del formulario individual casi no varía con los datos). CP14 (archivo Excel enviado directamente a la API) falló en la versión evaluada inicialmente y se volvió a ejecutar con el servicio corregido (Anexo~C). La latencia de \texttt{POST /predict}, medida en 100 solicitudes en ejecución local (sin red), tuvo mediana de 29 ms, percentil 95 de 33 ms y máximo de 38 ms. Como comprobación de consistencia, la probabilidad devuelta por la API para un registro coincidió con la calculada directamente sobre el modelo (0.437).
 
 \section{Resultados}
 \subsection{Desempeño en el conjunto de prueba nacional}
@@ -194,7 +194,7 @@ Las pruebas del sistema revelaron aspectos que deben tenerse en cuenta:
   \item \textbf{El resumen del tablero usaba predicciones sobre datos de entrenamiento.} En la versión evaluada inicialmente, \texttt{GET /dashboard} calculaba los ``casos'' como positivos predichos por el modelo sobre el archivo completo (\num{20510} registros, que incluye los usados para entrenar), por lo que no equivalía a la prevalencia observada (\SI{24.7}{\percent}). Se corrigió: el resumen usa el conjunto de prueba (\num{3699} registros que el modelo no vio al entrenar) y muestra juntos los casos observados (912) y los clasificados (\num{1887}), con la sensibilidad y la precisión del ámbito, que reproducen las métricas del modelo (0.693 y 0.335). En Tungurahua (112 registros) hay 35 casos observados y 57 clasificados, con una sensibilidad de 0.686 que es inestable por el tamaño de la muestra.
   \item \textbf{Imputación previa a la partición y muy alta en variables clave.} Los faltantes se imputaron antes de dividir los datos, y variables muy importantes del modelo tienen más de la mitad de sus valores imputados (peso y talla al nacer). Como un valor imputado coincide con la mediana, el modelo puede estar usando el hecho de que el dato faltaba y no el valor real; su importancia debe interpretarse con esa reserva.
   \item \textbf{El formulario de clasificación individual solo es ilustrativo.} La versión inicial del tablero pedía 8 datos y completaba las otras 106 variables con el valor 0 (y las categóricas con códigos numéricos que el modelo no vio en el entrenamiento): en 270 combinaciones la probabilidad varió solo de 0.436 a 0.512 y todas quedaron clasificadas con desnutrición. Se corrigió: el formulario envía las 114 variables (las no informadas como nulas, que el \textit{Pipeline} imputa) con las categorías válidas y la edad agrupada correcta. Aun así, en 512 combinaciones de prueba la probabilidad varió solo de 0.375 a 0.515 y el \SI{85.5}{\percent} quedó clasificado con desnutrición (CP15), porque el resto de las variables se imputa. Por eso la pantalla lo declara de uso ilustrativo y remite a la clasificación por archivo.
-  \item \textbf{Carga de archivos Excel.} La pantalla mencionaba archivos \texttt{.xlsx}, pero el servicio solo lee CSV y un Excel enviado a la API produce una excepción no controlada (CP14). El tablero ahora acepta solo CSV y muestra un mensaje claro con las columnas faltantes (CP16); la API aún no maneja el Excel de forma controlada.
+  \item \textbf{Carga de archivos Excel.} La pantalla mencionaba archivos \texttt{.xlsx}, pero en la versión evaluada inicialmente el servicio solo leía CSV y un Excel enviado a la API producía una excepción no controlada (CP14). Se corrigió: la API lee \texttt{.xlsx} y devuelve el mismo resultado que con el CSV equivalente, y ante un Excel dañado, un \texttt{.xls}, un archivo vacío o sin registros responde con un mensaje de error en lugar de una excepción. El tablero acepta solo CSV y muestra un mensaje claro con las columnas faltantes (CP16).
   \item \textbf{Página de métricas del tablero.} Leía los nombres de métricas de la versión anterior (\texttt{accuracy}, \texttt{recall}\ldots) y con la API v2 habría mostrado valores no numéricos; se actualizó para mostrar la sensibilidad, la precisión, el F1, la exactitud balanceada, el ROC-AUC y el PR-AUC de \texttt{metricas\_v2.json}.
   \item \textbf{Lenguaje de la interfaz.} La interfaz inicial usaba términos clínicos (``Sistema ML Clínico'', ``Predicción Clínica'', ``alto grado de confianza clínica'') y mencionaba XGBoost, aunque el modelo activo es Random Forest. Se corrigió: todas las pantallas muestran un aviso de herramienta académica exploratoria, se retiró el lenguaje clínico, el nombre del modelo se lee de la API y el resumen de indicadores aclara que las cifras son del conjunto de prueba y no la prevalencia poblacional (Anexo~B).
 \end{itemize}
@@ -212,7 +212,7 @@ La Tabla~\ref{tab:cumplimiento} indica el estado de cada requerimiento según la
     RF1 & Cumple & Pipeline con preprocesamiento ajustado solo en entrenamiento; semilla 42\\ \hline
     RF2 & Cumple & Tabla~\ref{tab:experimento}, Tabla~\ref{tab:metricas} y Figura~\ref{fig:comparacion}\\ \hline
     RF3 & Cumple & CP4 a CP7 (Anexo~C)\\ \hline
-    RF4 & Parcial & CP8: un CSV de 50 registros devuelve 50 filas; CP14: un archivo Excel produce un error no controlado\\ \hline
+    RF4 & Cumple & CP8: un CSV de 50 registros devuelve 50 filas; CP14: un Excel de 50 registros devuelve 50 filas y los archivos inválidos reciben un mensaje de error\\ \hline
     RF5 & Cumple & CP11: métricas idénticas a \texttt{metricas\_v2.json}\\ \hline
     RF6 & Cumple & CP9, CP10 y CP12: el resumen usa el conjunto de prueba y reproduce las métricas de \texttt{metricas\_v2.json}\\ \hline
     RF7 & Cumple & CP13\\ \hline
@@ -222,12 +222,12 @@ La Tabla~\ref{tab:cumplimiento} indica el estado de cada requerimiento según la
     RNF3 & Cumple & CP1 (\texttt{GET /health}). No se midió disponibilidad en el tiempo\\ \hline
     RNF4 & No cumple & La API no implementa autenticación; el CORS está abierto\\ \hline
     RNF5 & Cumple & Semilla y versiones fijadas en \texttt{requirements.txt}\\ \hline
-    RNF6 & Cumple & Módulos separados y 13 pruebas automáticas aprobadas\\ \hline
+    RNF6 & Cumple & Módulos separados y 21 pruebas automáticas aprobadas\\ \hline
     RNF7 & Cumple & Aviso académico visible en todas las pantallas y lenguaje clínico retirado (Anexo~B)\\ \hline
   \end{tabular}
 \end{table}
 
-En síntesis, el prototipo cumple 13 de los 15 requerimientos, 1 parcialmente y 1 no se cumple. El modelo tiene un desempeño moderado (ROC-AUC de 0.677), sobreajuste medido y ninguna validación externa; sus productos son una API funcional con datos completos y un tablero de consulta cuyo formulario individual solo es ilustrativo. Quedan pendientes la autenticación, la corrección en la API de la lectura de Excel, y la validación con una fuente independiente.
+En síntesis, el prototipo cumple 14 de los 15 requerimientos y 1 no se cumple. El modelo tiene un desempeño moderado (ROC-AUC de 0.677), sobreajuste medido y ninguna validación externa; sus productos son una API funcional con datos completos y un tablero de consulta cuyo formulario individual solo es ilustrativo. Quedan pendientes la autenticación y la validación con una fuente independiente.
 
 \section{Cronograma y Presupuesto}
 \subsection{Cronograma de Ejecución}
