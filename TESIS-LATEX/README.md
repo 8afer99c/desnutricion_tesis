@@ -19,13 +19,14 @@ Métricas: `TESIS MACHINE LEARNING/.../pipeline_v2/output/metricas_v2.json` (umb
 subgrupos, prueba sin variables de diseño, importancia, diccionario y pruebas de API se calcularon con
 `modelo_v2.joblib` (entorno Python 3.13 + scikit-learn 1.6.1). Los cálculos no modifican el pipeline.
 
-## Pendientes (texto en rojo `[PENDIENTE: …]` o entre corchetes)
-1. Nombres de los lectores (tribunal): marcadores entre corchetes en la aprobación de lectores (pág. iv).
-2. Diagnóstico AS-IS (Cap. II): confirmar con la tutora si basta sin entrevista.
-3. Fechas reales del cronograma y montos del presupuesto (Cap. III).
-4. URLs públicas de la API y del tablero (Anexo B.2).
+## Datos a confirmar en la revisión
+El documento no lleva marcadores de trabajo. Quedan estos datos, que dependen de la revisión del tutor o de quien los aporte:
+1. Nombres de los lectores (tribunal): las líneas de firma de la pág. iv están en blanco.
+2. Diagnóstico AS-IS (Cap. II): se reconstruyó desde la documentación del INEC, sin entrevista a usuarios; la limitación está declarada.
+3. Fechas del cronograma y montos del presupuesto (Cap. III): valores estimados.
+4. URLs públicas de la API y del tablero (Anexo B.2): el texto solo indica el uso local.
 
-Resueltos: título (se mantiene el registrado, por indicación del tutor; Cap. I «Relación con el tema del trabajo»),
+Resueltos antes de la entrega: título (se mantiene el registrado, por indicación del tutor; Cap. I «Relación con el tema del trabajo»),
 interfaz corregida (b441664), repositorio y hash (Anexo E) y `LIMPIEZA.ipynb` recuperado (commit 1b4b767).
 
 ## Hallazgos del prototipo/datos (ya documentados en cap. III–IV)

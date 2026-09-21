@@ -291,9 +291,6 @@
 \newcommand{\lineafirma}[1]{%
   \begin{center}\rule{62mm}{0.3pt}\\[2pt]#1\end{center}}
 
-%% Marca de contenido pendiente (borrador): aparece en rojo y negrita.
-%% Para la versión final basta redefinir \pend{#1}{} o buscar «PENDIENTE» y resolver.
-\newcommand{\pend}[1]{\textcolor{red}{\textbf{[PENDIENTE: #1]}}}
 
 %% Hiperenlaces (sin recuadros de color)
 \RequirePackage[hidelinks,unicode]{hyperref}
