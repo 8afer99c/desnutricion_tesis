@@ -11,7 +11,7 @@ Se desarrolló y evaluó un prototipo académico de clasificación de la desnutr
 
 \noindent\hspace*{\parindent}\textbf{Objetivo 4: API y tablero.} Se implementó una API REST con nueve servicios, que valida las 114 variables de entrada, y un tablero web que consume la API para consultar indicadores, métricas y predicciones.
 
-\noindent\hspace*{\parindent}\textbf{Objetivo 5: validación funcional y limitaciones.} Las 21 pruebas automáticas y 16 de los 17 casos de prueba se cumplieron (falló la variación de la puntuación del formulario individual), y la latencia mediana fue de 29 ms en ejecución local. Estas pruebas verifican el funcionamiento del software y no la validez predictiva ni clínica. Se identificó que el nivel de riesgo contradecía la clase asignada (corregido: BAJO coincide ahora con la clase 0), que el resumen del tablero usaba predicciones sobre datos de entrenamiento (corregido: ahora usa el conjunto de prueba), que la puntuación del formulario individual casi no varía con los datos porque el resto de las variables se imputa, y que la API no tiene autenticación.
+\noindent\hspace*{\parindent}\textbf{Objetivo 5: validación funcional y limitaciones.} Las 21 pruebas automáticas y 16 de los 17 casos de prueba se cumplieron (falló la variación de la puntuación del formulario individual), y la latencia mediana fue de 29 ms en ejecución local. Estas pruebas verifican el funcionamiento del software y no la validez predictiva ni clínica. Se identificó que el nivel de riesgo contradecía la clase asignada (corregido: BAJO coincide ahora con la clase 0), que el resumen del tablero usaba predicciones sobre datos de entrenamiento (corregido: ahora usa el conjunto de prueba), que la puntuación del formulario individual casi no varía con los datos porque el resto de las variables se imputa, y que la API no tiene autenticación (exclusión declarada del alcance).
 
 \subsection{Limitaciones}
 \begin{itemize}
@@ -22,7 +22,7 @@ Se desarrolló y evaluó un prototipo académico de clasificación de la desnutr
   \item \textbf{Imputación previa a la partición:} los faltantes se imputaron con mediana o moda sobre todos los registros antes de dividir los datos, y el peso y la talla al nacer tienen más de la mitad de sus valores imputados. El efecto sobre las métricas no se cuantificó.
   \item \textbf{Selección del modelo:} la comparación de los cuatro modelos base se hizo sobre la partición de prueba, por lo que el PR-AUC de prueba puede ser levemente optimista.
   \item \textbf{Validación externa:} no existe. La ENDI se exploró pero no se usó para validar.
-  \item \textbf{Seguridad y reproducibilidad:} la API no autentica usuarios y el CORS está abierto. Los resultados dependen de las versiones de librerías indicadas.
+  \item \textbf{Seguridad y reproducibilidad:} la API no autentica usuarios y el CORS está abierto; es una exclusión declarada del alcance, porque los datos son públicos. El servicio guarda en el servidor una copia del resultado de cada archivo clasificado, por lo que no debe recibir datos personales. Los resultados dependen de las versiones de librerías indicadas.
   \item \textbf{Alcance clínico:} el prototipo es una herramienta académica de apoyo analítico; no es un sistema de diagnóstico ni una solución validada para decisiones médicas.
   \item \textbf{Calibración y subgrupos:} las probabilidades no están calibradas y la sensibilidad varía según el área y la edad (Capítulo~III), por lo que un umbral único no es adecuado para un uso aplicado.
 \end{itemize}
@@ -33,7 +33,7 @@ Se desarrolló y evaluó un prototipo académico de clasificación de la desnutr
 \subsection{Recomendaciones inmediatas}
 \begin{itemize}
   \item \textbf{Decidir el futuro del formulario individual:} mantenerlo solo como ilustración o reemplazarlo por una carga de un registro completo.
-  \item \textbf{Proteger la API:} agregar autenticación y restringir el origen de las solicitudes antes de cualquier despliegue abierto.
+  \item \textbf{Proteger la API si se usa con datos no públicos:} agregar autenticación, restringir el origen de las solicitudes y definir una política de retención de los archivos de resultado.
 \end{itemize}
 
 \subsection{Trabajos futuros}

@@ -186,7 +186,7 @@ Los requerimientos se formularon de modo que cada uno tenga un criterio de acept
     RNF1 & Validación de entradas & El \SI{100}{\percent} de las solicitudes con variables faltantes o sobrantes se rechaza con HTTP 400. & Alta\\ \hline
     RNF2 & Rendimiento & Latencia mediana de \texttt{POST /predict} $\leq$ 200 ms, medida sobre 100 solicitudes. & Media\\ \hline
     RNF3 & Disponibilidad & \texttt{GET /health} responde HTTP 200 mientras el servicio esté desplegado. & Media\\ \hline
-    RNF4 & Seguridad y acceso & Autenticación y control de acceso a la API. & Media\\ \hline
+    RNF4 & Seguridad y acceso & Autenticación y control de acceso a la API (no implementada por decisión de alcance; Capítulo~III). & Media\\ \hline
     RNF5 & Reproducibilidad & Semilla fija (42) y versiones de librerías fijadas en \texttt{requirements.txt}. & Alta\\ \hline
     RNF6 & Mantenibilidad & Código separado por módulos y al menos 5 pruebas automáticas aprobadas. & Media\\ \hline
     RNF7 & Uso responsable & La interfaz y los documentos indican que es una herramienta académica exploratoria y no un sistema de diagnóstico. & Alta\\ \hline
