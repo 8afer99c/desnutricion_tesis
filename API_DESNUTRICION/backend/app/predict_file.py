@@ -51,7 +51,7 @@ class PredictFile:
         # Reordenar columnas exactamente igual al entrenamiento
         X = df[columnas_modelo]
 
-        from app.config import UMBRAL_DECISION
+        from app.config import UMBRAL_DECISION, nivel_riesgo
 
         probabilidades = Predictor.modelo.predict_proba(X)[:, 1]
 
@@ -64,17 +64,7 @@ class PredictFile:
         probabilidades = pd.Series(probabilidades)
 
 
-        df["riesgo"] = probabilidades.map(
-
-            lambda p:
-
-            "ALTO" if p >= 0.80 else
-
-            "MEDIO" if p >= 0.50 else
-
-            "BAJO"
-
-        )
+        df["riesgo"] = probabilidades.map(nivel_riesgo)
 
         total = len(df)
 
