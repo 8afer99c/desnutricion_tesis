@@ -144,6 +144,25 @@
 \fi
 \setcounter{tocdepth}{3}
 \renewcommand*\l@subsubsection{\@dottedtocline{3}{4.7em}{3.2em}}
+%% Columna de párrafo sin justificar (evita espacios estirados en columnas angostas)
+\newcolumntype{R}[1]{>{\raggedright\arraybackslash}p{#1}}
+%% Entradas de capítulo del índice: igual que la clase report, con menos espacio
+%% previo (0.75em en lugar de 1em) para que el índice no deje una línea huérfana.
+\renewcommand*\l@chapter[2]{%
+  \ifnum \c@tocdepth >\m@ne
+    \addpenalty{-\@highpenalty}%
+    \vskip 0.75em \@plus\p@
+    \setlength\@tempdima{1.5em}%
+    \begingroup
+      \parindent \z@ \rightskip \@pnumwidth
+      \parfillskip -\@pnumwidth
+      \leavevmode \bfseries
+      \advance\leftskip\@tempdima
+      \hskip -\leftskip
+      #1\nobreak\hfil \nobreak\hb@xt@\@pnumwidth{\hss #2}\par
+      \penalty\@highpenalty
+    \endgroup
+  \fi}
 
 \titleformat{\section}{\normalfont\large\bfseries}{\thesection}{0.8em}{}
 \titleformat{\subsection}{\normalfont\normalsize\bfseries}{\thesubsection}{0.8em}{}

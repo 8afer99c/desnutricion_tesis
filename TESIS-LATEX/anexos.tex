@@ -73,6 +73,7 @@ En la rama \texttt{main}, que es la desplegada, la API se expone bajo el prefijo
 \section*{A.3 Formato de entrada de \texttt{/predict}}
 La solicitud debe contener exactamente las 114 variables del modelo (\texttt{GET /features} las lista y \texttt{GET /example} devuelve una plantilla con las 114 variables en \texttt{null}). Las variables categóricas se envían como texto con las mismas categorías del entrenamiento y las numéricas como números. Los valores no informados pueden enviarse como \texttt{null}; el \textit{Pipeline} los imputa con la mediana o la moda del entrenamiento.
 
+\noindent\begin{minipage}{\linewidth}
 \begin{lstlisting}[frame=single,basicstyle=\ttfamily\footnotesize]
 POST /predict   (cuerpo JSON con las 114 variables)
 { "area": "Urbano", "provincia": 18, "sexo": "Mujer",
@@ -88,6 +89,7 @@ Respuesta HTTP 400 (variables que no coinciden):
 { "detail": { "mensaje": "Las variables enviadas no
   coinciden con el modelo", "detalle": { ... } } }
 \end{lstlisting}
+\end{minipage}
 
 \section*{A.4 Niveles de clase y de riesgo}
 La clase se asigna con el umbral de 0.42 (probabilidad $\geq$ 0.42: clase 1). El nivel de riesgo se deriva del mismo umbral: BAJO si la probabilidad es menor que 0.42 (clase 0), MEDIO si está entre 0.42 y 0.60 y ALTO si es $\geq$ 0.60. Por tanto, ningún caso con clase 1 figura con riesgo BAJO. El corte de ALTO equivale aproximadamente al percentil 95 de las probabilidades del conjunto de prueba.
@@ -462,3 +464,6 @@ Se incluye el código esencial del pipeline y del servicio. El resto está en el
 
 \section*{I.6 Ruta de predicción individual (\texttt{main.py}, extracto)}
 \lstinputlisting[language=Python,basicstyle=\ttfamily\scriptsize,frame=single]{anexos/codigo/main_predict.py}
+
+\section*{I.7 Nivel de riesgo (\texttt{config.py}, extracto)}
+\lstinputlisting[language=Python,basicstyle=\ttfamily\scriptsize,frame=single]{anexos/codigo/config_riesgo.py}
