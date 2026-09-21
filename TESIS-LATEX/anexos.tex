@@ -47,7 +47,9 @@
 \end{table}
 
 \section*{A.2 Configuración}
-La variable de entorno \texttt{MODEL\_VERSION} selecciona el modelo activo: \texttt{v2} (por defecto) o \texttt{v1}. El umbral de decisión de la versión v2 se lee de \texttt{metricas\_v2.json} (0.42); la versión v1 usa 0.5. El servicio se inicia en Render con \texttt{uvicorn app.main:app --host 0.0.0.0 --port 10000}, y el tablero usa la variable \texttt{VITE\_API\_URL} para ubicar la API cuando se despliega en Vercel.
+La variable de entorno \texttt{MODEL\_VERSION} selecciona el modelo activo: \texttt{v2} (por defecto) o \texttt{v1}. El umbral de decisión de la versión v2 se lee de \texttt{metricas\_v2.json} (0.42); la versión v1 usa 0.5. El servicio se inicia en Render con \texttt{uvicorn app.main:app --host 0.0.0.0 --port \$PORT}, y el tablero usa la variable \texttt{VITE\_API\_URL} para ubicar la API cuando se despliega en Vercel.
+
+En la rama \texttt{main}, que es la desplegada, la API se expone bajo el prefijo \texttt{/api} (por ejemplo, \texttt{/api/predict}) y el mismo servicio entrega el tablero compilado. En \texttt{pipeline-v2-fixes}, con la que se ejecutaron los casos de prueba del Anexo~C, las rutas no llevan prefijo. En este documento las rutas se escriben sin prefijo; los cambios posteriores a las pruebas (nivel de riesgo, resumen del tablero, lectura de archivos y plantilla de ejemplo) se verificaron también en \texttt{main} con el prefijo \texttt{/api}.
 
 \begin{table}[H]
   \caption{Dependencias del backend (\texttt{requirements.txt}).}
@@ -69,7 +71,7 @@ La variable de entorno \texttt{MODEL\_VERSION} selecciona el modelo activo: \tex
 \end{table}
 
 \section*{A.3 Formato de entrada de \texttt{/predict}}
-La solicitud debe contener exactamente las 114 variables del modelo (\texttt{GET /features} las lista y \texttt{GET /example} devuelve una plantilla vacía). Las variables categóricas se envían como texto con las mismas categorías del entrenamiento y las numéricas como números. Los valores no informados pueden enviarse como \texttt{null}; el \textit{Pipeline} los imputa con la mediana o la moda del entrenamiento.
+La solicitud debe contener exactamente las 114 variables del modelo (\texttt{GET /features} las lista y \texttt{GET /example} devuelve una plantilla con las 114 variables en \texttt{null}). Las variables categóricas se envían como texto con las mismas categorías del entrenamiento y las numéricas como números. Los valores no informados pueden enviarse como \texttt{null}; el \textit{Pipeline} los imputa con la mediana o la moda del entrenamiento.
 
 \begin{lstlisting}[frame=single,basicstyle=\ttfamily\footnotesize]
 POST /predict   (cuerpo JSON con las 114 variables)
@@ -222,7 +224,7 @@ Muestra las métricas de la clase con desnutrición crónica en el conjunto de p
 %% ----------------------------------------------------------------- ANEXO C
 \anexo{C}{Evidencias de Pruebas del Sistema}
 
-Las pruebas de la API se ejecutaron el 20 de septiembre de 2026 sobre el backend en ejecución local (\textit{TestClient} de FastAPI, modelo v2), con un registro real del conjunto de prueba como entrada. Las pruebas del tablero (CP15 a CP17) se ejecutaron el mismo día en un navegador automatizado (Playwright) sobre la interfaz ya corregida. Además se ejecutaron las 21 pruebas automáticas del repositorio (5 de contrato, 3 del nivel de riesgo, 5 del resumen del tablero y 8 de la lectura de archivos), todas aprobadas.
+Las pruebas de la API se ejecutaron el 20 de septiembre de 2026 sobre el backend en ejecución local (\textit{TestClient} de FastAPI, modelo v2), con un registro real del conjunto de prueba como entrada. Las pruebas del tablero (CP15 a CP17) se ejecutaron el mismo día en un navegador automatizado (Playwright) sobre la interfaz ya corregida. Además se ejecutaron las 22 pruebas automáticas del repositorio (5 de contrato, 3 del nivel de riesgo, 5 del resumen del tablero, 8 de la lectura de archivos y 1 de la plantilla de ejemplo), todas aprobadas.
 
 \begingroup
 \scriptsize\setlength{\tabcolsep}{3pt}\arrayrulecolor{black!55}\renewcommand{\arraystretch}{1.1}
@@ -274,8 +276,8 @@ Cálculo directo sobre el modelo (sin API): 0.437
 \section*{C.2 Pruebas automáticas del repositorio}
 \begin{lstlisting}[frame=single,basicstyle=\ttfamily\footnotesize]
 $ python -m pytest -q tests
-.....................                           [100%]
-21 passed
+......................                          [100%]
+22 passed
 \end{lstlisting}
 
 %% ----------------------------------------------------------------- ANEXO D
@@ -320,7 +322,7 @@ $ python -m pytest -q tests
 \section*{E.1 Repositorios}
 El código está en un único repositorio consolidado de GitHub, cuya cuenta propietaria es \texttt{8afer99c}: \url{https://github.com/8afer99c/desnutricion_tesis}. Contiene los notebooks originales, el pipeline corregido (\texttt{pipeline\_v2}), la API y el tablero. Se publicaron dos ramas: \texttt{pipeline-v2-fixes} (rama por defecto del repositorio) y \texttt{main} (rama desplegada). El historial de commits conserva la autoría que Git registró en cada commit.
 
-La versión final del tablero corresponde al commit \texttt{b441664} de \texttt{pipeline-v2-fixes} y a su integración en \texttt{main} (commit \texttt{8df0ade}, 20 de septiembre de 2026). El archivo \texttt{metricas\_v2.json} se versionó en \texttt{45928dd} (\texttt{main}) y \texttt{af4fcf4} (\texttt{pipeline-v2-fixes}), y la corrección del nivel de riesgo de la API está en \texttt{588d8fe} (\texttt{main}) y \texttt{7b37205} (\texttt{pipeline-v2-fixes}). El resumen del tablero con el conjunto de prueba (\texttt{data/test\_v2.csv}) está en \texttt{edf40ae} (\texttt{main}) y \texttt{d785b95} (\texttt{pipeline-v2-fixes}). La lectura controlada de CSV y Excel en \texttt{/predict-file} está en \texttt{89a23d5} (\texttt{main}) y \texttt{db5a77f} (\texttt{pipeline-v2-fixes}). Los notebooks y el paquete \texttt{pipeline\_v2} se conservan en el historial hasta el commit \texttt{1b4b767}, ya que desde el commit \texttt{bf27226} la reorganización del repositorio los retiró del árbol de archivos actual; se recuperan con \texttt{git show <commit>:<ruta>}.
+La versión final del tablero corresponde al commit \texttt{b441664} de \texttt{pipeline-v2-fixes} y a su integración en \texttt{main} (commit \texttt{8df0ade}, 20 de septiembre de 2026). El archivo \texttt{metricas\_v2.json} se versionó en \texttt{45928dd} (\texttt{main}) y \texttt{af4fcf4} (\texttt{pipeline-v2-fixes}), y la corrección del nivel de riesgo de la API está en \texttt{588d8fe} (\texttt{main}) y \texttt{7b37205} (\texttt{pipeline-v2-fixes}). El resumen del tablero con el conjunto de prueba (\texttt{data/test\_v2.csv}) está en \texttt{edf40ae} (\texttt{main}) y \texttt{d785b95} (\texttt{pipeline-v2-fixes}). La lectura controlada de CSV y Excel en \texttt{/predict-file} está en \texttt{89a23d5} (\texttt{main}) y \texttt{db5a77f} (\texttt{pipeline-v2-fixes}). Se eliminó el endpoint de depuración \texttt{/api/debug-files} (\texttt{9a30a0d}, \texttt{main}) y se restauró la plantilla \texttt{/api/example} (\texttt{b46738f}, \texttt{main}; prueba de regresión en \texttt{4b2ce05}, \texttt{pipeline-v2-fixes}). Los notebooks y el paquete \texttt{pipeline\_v2} se conservan en el historial hasta el commit \texttt{1b4b767}, ya que desde el commit \texttt{bf27226} la reorganización del repositorio los retiró del árbol de archivos actual; se recuperan con \texttt{git show <commit>:<ruta>}.
 
 \section*{E.2 Reproducción de los resultados}
 Desde la carpeta del proyecto, con Python 3.13 y las versiones de la Tabla~\ref{tab:deps}, el pipeline se ejecuta en este orden:
@@ -365,6 +367,8 @@ Los archivos generados quedan en \texttt{pipeline\_v2/output}. Cargar \texttt{mo
   2026-09-20 & \texttt{588d8fe}, \texttt{7b37205} & Nivel de riesgo de la API coherente con el umbral de decisión 0.42 (\texttt{main} y \texttt{pipeline-v2-fixes})\\ \hline
   2026-09-20 & \texttt{edf40ae}, \texttt{d785b95} & Resumen del tablero con el conjunto de prueba: casos observados y clasificados, sensibilidad y precisión\\ \hline
   2026-09-20 & \texttt{89a23d5}, \texttt{db5a77f} & Lectura controlada de CSV y Excel en \texttt{/predict-file}, con mensajes de error para archivos inválidos\\ \hline
+  2026-09-20 & \texttt{9a30a0d} & Eliminar el endpoint público de depuración \texttt{/api/debug-files} (\texttt{main})\\ \hline
+  2026-09-20 & \texttt{b46738f}, \texttt{4b2ce05} & Restaurar \texttt{/api/example} y agregar su prueba de regresión\\ \hline
 \end{longtable}
 \endgroup
 
