@@ -20,6 +20,10 @@ MODEL_PATH_V2 = BASE_DIR / "models" / "modelo_v2.joblib"
 MODEL_PATH = MODEL_PATH_V1 if MODEL_VERSION == "v1" else MODEL_PATH_V2
 DATA_PATH = BASE_DIR / "data" / "ENSANUT_MODELO.csv"
 
+# Particion de prueba (20 %) de pipeline_v2/split_dataset.py: registros que el
+# modelo v2 no vio al entrenar. El resumen del tablero se calcula sobre ella.
+DATA_TEST_PATH = BASE_DIR / "data" / "test_v2.csv"
+
 UMBRAL_PATH = BASE_DIR / "models" / "metricas_v2.json"
 
 

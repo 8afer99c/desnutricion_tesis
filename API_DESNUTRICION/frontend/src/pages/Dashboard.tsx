@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { fetchDashboard } from '../services/api';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
+import { BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 import Tooltip from '../components/Tooltip';
-import { Users, Activity, ShieldCheck, PieChart as PieChartIcon, AlertTriangle } from 'lucide-react';
-
-const COLORS = ['#ef4444', '#10b981'];
+import { Users, Activity, Target, ClipboardCheck, AlertTriangle, Info } from 'lucide-react';
 
 // Nombres tal como los espera la API (GET /dashboard?provincia=...)
 const PROVINCIAS = [
@@ -12,6 +10,11 @@ const PROVINCIAS = [
   'Loja', 'Los Ríos', 'Manabí', 'Morona Santiago', 'Napo', 'Pastaza', 'Pichincha', 'Tungurahua', 'Zamora Chinchipe',
   'Galápagos', 'Sucumbíos', 'Orellana', 'Santo Domingo de los Tsáchilas', 'Santa Elena',
 ];
+
+// Por debajo de este número de registros de prueba, las cifras por provincia son poco estables.
+const POCOS_REGISTROS = 150;
+
+const pct = (v: number | null | undefined) => (v === null || v === undefined ? '—' : (v * 100).toFixed(1));
 
 interface KpiProps { titulo: string; ayuda: string; valor: React.ReactNode; nota: string; icono: React.ReactNode; color: string }
 const Kpi: React.FC<KpiProps> = ({ titulo, ayuda, valor, nota, icono, color }) => (
@@ -37,9 +40,12 @@ const Dashboard: React.FC = () => {
   }, [provincia]);
 
   const chartData = [
-    { name: 'Clasificados con desnutrición crónica', value: data?.casos_desnutricion || 0 },
-    { name: 'Clasificados sin desnutrición crónica', value: data?.casos_sin_desnutricion || 0 },
+    { name: 'Casos observados', value: data?.casos_observados ?? 0, color: '#6366f1' },
+    { name: 'Clasificados por el modelo', value: data?.casos_desnutricion ?? 0, color: '#ef4444' },
+    { name: 'Coinciden (observado y clasificado)', value: data?.verdaderos_positivos ?? 0, color: '#10b981' },
   ];
+
+  const pocos = data && data.total_registros > 0 && data.total_registros < POCOS_REGISTROS;
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -49,9 +55,9 @@ const Dashboard: React.FC = () => {
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-blue-100 font-medium text-xs tracking-wider uppercase mb-4">
             <Activity className="w-3 h-3" /> Indicadores del modelo
           </div>
-          <h2 className="text-3xl font-extrabold mb-2 tracking-tight">Clasificaciones del modelo por provincia</h2>
+          <h2 className="text-3xl font-extrabold mb-2 tracking-tight">Casos observados y clasificados por provincia</h2>
           <p className="text-blue-100/80 max-w-2xl text-lg">
-            Resumen de cuántos registros del archivo de datos clasifica el modelo con y sin desnutrición crónica.
+            Comparación, en el conjunto de prueba, entre los casos de desnutrición crónica que registra la encuesta y los que clasifica el modelo.
           </p>
           <div className="mt-6 flex items-center gap-3">
             <label htmlFor="provincia" className="text-sm text-blue-100">Ámbito</label>
@@ -66,13 +72,23 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 flex gap-3 text-amber-900 text-sm">
-        <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
+      <div className="bg-sky-50 border border-sky-200 rounded-2xl p-5 flex gap-3 text-sky-900 text-sm">
+        <Info className="w-5 h-5 shrink-0 mt-0.5" />
         <p>
-          Estos valores son <strong>clasificaciones del modelo</strong> sobre un archivo de datos que incluye registros usados para
-          entrenarlo. <strong>No equivalen a la prevalencia observada</strong> de desnutrición crónica y no deben usarse como tal.
+          Las cifras se calculan con el <strong>conjunto de prueba</strong>: registros de la ENSANUT 2018 que el modelo <strong>no usó para
+          entrenarse</strong> (20 % de la base). No son la prevalencia poblacional: la muestra no está ponderada por el diseño de la encuesta.
         </p>
       </div>
+
+      {pocos && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 flex gap-3 text-amber-900 text-sm">
+          <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
+          <p>
+            Este ámbito tiene solo <strong>{data.total_registros} registros de prueba</strong>. Con tan pocos casos, la sensibilidad y la
+            precisión son inestables y no permiten sacar conclusiones por provincia.
+          </p>
+        </div>
+      )}
 
       {!data ? (
         <div className="p-8 flex justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>
@@ -84,35 +100,37 @@ const Dashboard: React.FC = () => {
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Kpi titulo="Registros" ayuda="Número de registros del archivo de datos en el ámbito elegido." valor={data.total_registros ?? 0}
-                 nota="Registros clasificados" icono={<Users className="w-5 h-5" />} color="bg-blue-50 text-blue-600" />
+            <Kpi titulo="Registros de prueba" ayuda="Número de registros del conjunto de prueba en el ámbito elegido." valor={data.total_registros ?? 0}
+                 nota="No usados para entrenar" icono={<Users className="w-5 h-5" />} color="bg-blue-50 text-blue-600" />
+            <Kpi titulo="Casos observados" ayuda="Registros con desnutrición crónica según la encuesta (variable objetivo)."
+                 valor={<span className="text-indigo-600">{data.casos_observados ?? 0}</span>}
+                 nota={`${data.porcentaje_observado ?? 0} % de los registros de prueba`} icono={<ClipboardCheck className="w-5 h-5" />} color="bg-indigo-50 text-indigo-600" />
             <Kpi titulo="Clasificados con desnutrición" ayuda="Registros para los que el modelo estima desnutrición crónica (puntuación mayor o igual al umbral)."
-                 valor={<span className="text-red-600">{data.casos_desnutricion ?? 0}</span>} nota="Estimación del modelo" icono={<Activity className="w-5 h-5" />} color="bg-red-50 text-red-600" />
-            <Kpi titulo="Clasificados sin desnutrición" ayuda="Registros para los que el modelo no estima desnutrición crónica."
-                 valor={<span className="text-emerald-600">{data.casos_sin_desnutricion ?? 0}</span>} nota="Estimación del modelo" icono={<ShieldCheck className="w-5 h-5" />} color="bg-emerald-50 text-emerald-600" />
-            <Kpi titulo="% clasificado con desnutrición" ayuda="Porcentaje de registros que el modelo clasifica con desnutrición crónica. No es la prevalencia observada."
-                 valor={<>{data.porcentaje_desnutricion ?? 0}<span className="text-2xl text-slate-400"> %</span></>} nota="No es la prevalencia" icono={<PieChartIcon className="w-5 h-5" />} color="bg-purple-50 text-purple-600" />
+                 valor={<span className="text-red-600">{data.casos_desnutricion ?? 0}</span>}
+                 nota={`${data.porcentaje_desnutricion ?? 0} % (el umbral favorece la sensibilidad)`} icono={<Activity className="w-5 h-5" />} color="bg-red-50 text-red-600" />
+            <Kpi titulo="Sensibilidad en el ámbito" ayuda="De los casos observados, proporción que el modelo identifica."
+                 valor={<>{pct(data.sensibilidad)}<span className="text-2xl text-slate-400"> %</span></>}
+                 nota={`Precisión: ${pct(data.precision)} %`} icono={<Target className="w-5 h-5" />} color="bg-emerald-50 text-emerald-600" />
           </div>
 
-          <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 flex flex-col items-center">
-            <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wide mb-4">Distribución de las clasificaciones</h4>
-            <div className="w-full max-w-md h-64 relative">
+          <div className="bg-white p-8 rounded-3xl shadow-sm border border-slate-100">
+            <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wide mb-1">Observados frente a clasificados</h4>
+            <p className="text-sm text-slate-500 mb-4">
+              El modelo clasifica más registros de los que tienen la condición: prioriza detectar casos (sensibilidad) a costa de la precisión.
+            </p>
+            <div className="w-full h-64">
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={chartData} innerRadius={70} outerRadius={90} paddingAngle={8} dataKey="value" stroke="none" cornerRadius={10}>
-                    {chartData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                  </Pie>
-                  <RechartsTooltip contentStyle={{ borderRadius: '12px', border: 'none' }} itemStyle={{ fontWeight: 'bold' }} />
-                </PieChart>
+                <BarChart data={chartData} margin={{ top: 10, right: 20, left: 0, bottom: 10 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                  <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#475569' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fill: '#64748b' }} axisLine={false} tickLine={false} allowDecimals={false} />
+                  <RechartsTooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none' }}
+                                   formatter={(value) => [String(value), 'Registros']} />
+                  <Bar dataKey="value" radius={[8, 8, 0, 0]} barSize={56}>
+                    {chartData.map((d, i) => <Cell key={i} fill={d.color} />)}
+                  </Bar>
+                </BarChart>
               </ResponsiveContainer>
-              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-3xl font-black text-slate-800">{data.total_registros}</span>
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Registros</span>
-              </div>
-            </div>
-            <div className="flex justify-center gap-6 mt-4">
-              <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-red-500"></div><span className="text-sm text-slate-600">Con desnutrición (estimado)</span></div>
-              <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-emerald-500"></div><span className="text-sm text-slate-600">Sin desnutrición (estimado)</span></div>
             </div>
           </div>
         </>
