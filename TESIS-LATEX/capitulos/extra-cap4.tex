@@ -1,0 +1,11 @@
+\subsection{Aportes del trabajo}
+\begin{itemize}
+  \item \textbf{Procedimiento documentado y corregido:} se detectó y corrigió una fuga en la versión inicial (\num{2017} etiquetas imputadas) y se dejó el procedimiento reproducible, con semilla fija y código disponible (Anexo~I).
+  \item \textbf{Evaluación transparente:} se reportaron métricas por clase, intervalos de confianza, sobreajuste, calibración y desempeño por subgrupos, en lugar de una exactitud global.
+  \item \textbf{Evaluación para Tungurahua:} se cuantificó el desempeño en la provincia con sus límites de representatividad.
+  \item \textbf{Prototipo con pruebas:} se entregó una API con validación de entradas, casos de prueba y una lista explícita de defectos encontrados.
+\end{itemize}
+
+\subsection{Lectura conjunta de los análisis complementarios}
+Los análisis adicionales del Capítulo~III matizan el desempeño global. Primero, las probabilidades del modelo no están calibradas (error de Brier de 0.205 frente a 0.186 de la prevalencia), por lo que sirven para ordenar casos y no como riesgo absoluto. Segundo, con un umbral único la sensibilidad cambia mucho según el subgrupo: 0.880 en el área rural frente a 0.525 en la urbana, y 0.892 entre los 12 y 23 meses frente a 0.505 entre los 36 y 59 meses. Tercero, excluir las variables de diseño muestral no modifica el ROC-AUC (0.679 frente a 0.677), de modo que el desempeño no depende de ellas. Cuarto, la elección de Random Forest sobre la regresión logística es una preferencia débil: el ROC-AUC de la regresión logística (0.667) y su PR-AUC (0.391) son cercanos a los del bosque (0.680 y 0.411).
+

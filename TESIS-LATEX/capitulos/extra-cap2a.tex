@@ -1,0 +1,55 @@
+\subsection{Reglas de limpieza y preparación}
+La Tabla~\ref{tab:reglas} detalla las reglas aplicadas al construir la base del modelo. El código correspondiente está en el Anexo~I.
+
+\begin{table}[H]
+  \caption{Reglas de limpieza y preparación de la base.}
+  \label{tab:reglas}
+  \tablabase\footnotesize
+  \begin{tabular}{|c|p{5.0cm}|p{6.9cm}|}
+    \hline
+    \enc{N.º} & \enc{Regla} & \enc{Justificación y verificación}\\ \hline
+    1 & Excluir los registros con variable objetivo sin medir & Se evita fabricar etiquetas. Se excluyeron \num{2017} registros y quedaron \num{18493}\\ \hline
+    2 & Alinear la base cruda y la base renombrada por posición & Se verificó que las etiquetas de los \num{18493} registros medidos coinciden al \SI{100}{\percent}; si difiere, el script se detiene\\ \hline
+    3 & Convertir valores especiales en nulos & Unifica códigos de no respuesta antes de imputar\\ \hline
+    4 & Imputación de valores ausentes & La base del modelo no tiene nulos: se imputaron con mediana o moda en la limpieza inicial, sobre todos los registros y antes de la partición (limitación; Capítulo~III). El imputador del \textit{Pipeline} queda sin efecto\\ \hline
+    5 & Separar entrenamiento y prueba antes del modelado & Partición 80/20 estratificada con semilla 42\\ \hline
+    6 & Revisar fuga por variable & AUC univariado $\leq$ 0.95 en todas las variables evaluadas\\ \hline
+    7 & Exigir que toda columna sea numérica o categórica & Una prueba detiene el proceso si alguna columna quedara fuera del modelo\\ \hline
+  \end{tabular}
+\end{table}
+
+\subsection{Búsqueda de hiperparámetros}
+Solo el algoritmo ganador recibió búsqueda de hiperparámetros. Para Random Forest se muestrearon 40 combinaciones (\textit{RandomizedSearchCV}) con validación cruzada estratificada de 5 particiones y PR-AUC como criterio (Tabla~\ref{tab:grilla}). Se acotó la profundidad y el tamaño de las hojas para reducir el tamaño del modelo (de 170 MB a 28 MB) y el sobreajuste.
+
+\begin{table}[H]
+  \caption{Espacio de búsqueda de Random Forest y valores seleccionados.}
+  \label{tab:grilla}
+  \tablabase\small
+  \begin{tabular}{|p{4.6cm}|p{5.6cm}|c|}
+    \hline
+    \enc{Hiperparámetro} & \enc{Valores explorados} & \enc{Seleccionado}\\ \hline
+    \texttt{n\_estimators} & 100, 150, 200, 300 & 300\\ \hline
+    \texttt{max\_depth} & 5, 8, 10, 15, 20 & 20\\ \hline
+    \texttt{min\_samples\_leaf} & 1, 2, 5, 10 & 10\\ \hline
+    \texttt{min\_samples\_split} & 2, 5, 10 & 2\\ \hline
+    \texttt{max\_features} & \texttt{sqrt}, \texttt{log2} & \texttt{sqrt}\\ \hline
+  \end{tabular}
+\end{table}
+
+\subsection{Riesgos del proyecto y mitigación}
+\begin{table}[H]
+  \caption{Riesgos identificados y medidas aplicadas.}
+  \label{tab:riesgos}
+  \tablabase\footnotesize
+  \begin{tabular}{|p{3.3cm}|p{4.9cm}|p{5.4cm}|}
+    \hline
+    \enc{Riesgo} & \enc{Efecto posible} & \enc{Medida en el proyecto}\\ \hline
+    Fuga de información & Métricas infladas & Exclusión de la variable objetivo faltante, \textit{Pipeline} y revisión univariada; persiste la imputación previa a la partición\\ \hline
+    Desbalance de clases & Modelo que ignora la clase 1 & Ponderación de clases, umbral ajustado y métricas por clase\\ \hline
+    Sobreajuste & Desempeño real menor al de entrenamiento & Regularización y reporte de la brecha entrenamiento--prueba\\ \hline
+    Representatividad territorial & Estimaciones imprecisas para Tungurahua & Intervalos de confianza y advertencia de uso\\ \hline
+    Uso indebido como diagnóstico & Decisiones clínicas sin sustento & Aviso de herramienta académica y alcance declarado\\ \hline
+    Acceso no autorizado a la API & Uso o abuso del servicio; acceso a los archivos cargados & Riesgo aceptado: no se implementó autenticación porque el modelo usa microdatos públicos y el prototipo no debe recibir datos personales (Capítulo~III)\\ \hline
+  \end{tabular}
+\end{table}
+

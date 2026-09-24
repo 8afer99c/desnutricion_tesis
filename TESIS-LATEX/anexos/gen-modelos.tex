@@ -1,0 +1,13 @@
+\begin{table}[H]
+  \caption{Métricas de los cuatro modelos base en el conjunto de prueba, con el umbral de cada modelo (F1 máximo por validación cruzada en entrenamiento).}
+  \label{tab:modelos4}
+  \tablabase\scriptsize
+  \begin{tabular}{|l|c|c|c|c|c|c|c|c|}
+    \hline
+    \enc{Modelo} & \enc{PR-AUC} & \enc{ROC-AUC} & \enc{Umbral} & \enc{Sens.} & \enc{Espec.} & \enc{Prec.} & \enc{F1} & \enc{Ex. bal.} \\ \hline
+    Regresión logística & 0.391 & 0.667 & 0.470 & 0.673 & 0.574 & 0.341 & 0.453 & 0.624 \\ \hline
+    Árbol de decisión & 0.263 & 0.536 & 0.050 & 0.300 & 0.773 & 0.302 & 0.301 & 0.536 \\ \hline
+    Random Forest & 0.411 & 0.680 & 0.230 & 0.735 & 0.521 & 0.334 & 0.459 & 0.628 \\ \hline
+    XGBoost & 0.368 & 0.648 & 0.240 & 0.819 & 0.359 & 0.295 & 0.434 & 0.589 \\ \hline
+  \end{tabular}
+\end{table}

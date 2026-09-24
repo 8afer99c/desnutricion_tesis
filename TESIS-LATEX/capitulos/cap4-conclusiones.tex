@@ -1,0 +1,45 @@
+\chapter{Conclusiones y Recomendaciones}
+
+\section{Conclusiones}
+Se desarrolló y evaluó un prototipo académico de clasificación de la desnutrición crónica infantil con microdatos de la ENSANUT 2018. Las conclusiones siguientes corresponden a cada objetivo específico y se sustentan en los resultados del Capítulo~III.
+
+\noindent\hspace*{\parindent}\textbf{Objetivo 1: análisis y preparación de datos.} La base original tenía \num{20510} registros y 350 variables; \num{2017} registros (\SI{9.8}{\percent}) carecían de la variable objetivo y se excluyeron en lugar de imputarse, con lo que se conservaron \num{18493} registros y 114 predictores. Los predictores no incluyen talla ni peso actuales del niño, pero sí dos variables de diseño muestral (\texttt{factor\_expansion} y \texttt{estrato}) que pueden condicionar los resultados. Además, 84 de los 114 predictores tenían valores ausentes (32 con más del \SI{10}{\percent}), que se imputaron antes de la partición.
+
+\noindent\hspace*{\parindent}\textbf{Objetivo 2: diseño de la arquitectura y del protocolo.} La solución se organizó en cuatro componentes (pipeline, artefactos, API y tablero). El protocolo fijó una partición 80/20 estratificada con semilla 42, un preprocesamiento dentro del \textit{Pipeline}, la selección por PR-AUC y un umbral de decisión de 0.42. Se definieron 8 requerimientos funcionales y 7 no funcionales con criterios de aceptación.
+
+\noindent\hspace*{\parindent}\textbf{Objetivo 3: entrenamiento, comparación y evaluación.} Random Forest obtuvo el mayor PR-AUC entre los cuatro modelos (0.411). Con el modelo final, en el conjunto de prueba nacional (n = \num{3699}), la sensibilidad fue de 0.693, la precisión de 0.335, el F1 de 0.452, la exactitud balanceada de 0.621, el ROC-AUC de 0.677 y el PR-AUC de 0.409. En Tungurahua (n = 112) la sensibilidad fue de 0.686 con intervalo de \SI{95}{\percent} de 0.533 a 0.833. El desempeño es moderado y comparable con el reportado con datos de la ENDI (AUC de 0.62 a 0.66), y el modelo presenta sobreajuste (exactitud balanceada de 0.819 en entrenamiento frente a 0.621 en prueba).
+
+\noindent\hspace*{\parindent}\textbf{Objetivo 4: API y tablero.} Se implementó una API REST con nueve servicios, que valida las 114 variables de entrada, y un tablero web que consume la API para consultar indicadores, métricas y predicciones.
+
+\noindent\hspace*{\parindent}\textbf{Objetivo 5: validación funcional y limitaciones.} Las 22 pruebas automáticas y 16 de los 17 casos de prueba se cumplieron (falló la variación de la puntuación del formulario individual), y la latencia mediana fue de 29 ms en ejecución local. Estas pruebas verifican el funcionamiento del software y no la validez predictiva ni clínica. Se identificó que el nivel de riesgo contradecía la clase asignada (corregido: BAJO coincide ahora con la clase 0), que el resumen del tablero usaba predicciones sobre datos de entrenamiento (corregido: ahora usa el conjunto de prueba), que la puntuación del formulario individual casi no varía con los datos porque el resto de las variables se imputa, y que la API no tiene autenticación (exclusión declarada del alcance).
+
+\subsection{Limitaciones}
+\begin{itemize}
+  \item \textbf{Representatividad territorial:} Tungurahua aporta \num{531} registros (112 en la prueba), por lo que sus estimaciones son imprecisas y no permiten resultados por cantón o parroquia. Las prevalencias reportadas no están ponderadas.
+  \item \textbf{Diseño transversal:} el modelo estima la condición observada; no anticipa casos futuros.
+  \item \textbf{Desbalance:} la clase de interés es el \SI{24.7}{\percent}; la precisión es baja (una de cada tres alertas es un caso real).
+  \item \textbf{Posible fuga o sesgo por variables de diseño:} \texttt{factor\_expansion} y \texttt{estrato} figuran entre las variables más importantes.
+  \item \textbf{Imputación previa a la partición:} los faltantes se imputaron con mediana o moda sobre todos los registros antes de dividir los datos, y el peso y la talla al nacer tienen más de la mitad de sus valores imputados. El efecto sobre las métricas no se cuantificó.
+  \item \textbf{Selección del modelo:} la comparación de los cuatro modelos base se hizo sobre la partición de prueba, por lo que el PR-AUC de prueba puede ser levemente optimista.
+  \item \textbf{Validación externa:} no existe. La ENDI se exploró pero no se usó para validar.
+  \item \textbf{Seguridad y reproducibilidad:} la API no autentica usuarios y el CORS está abierto; es una exclusión declarada del alcance, porque los datos son públicos. El servicio guarda en el servidor una copia del resultado de cada archivo clasificado, por lo que no debe recibir datos personales. Los resultados dependen de las versiones de librerías indicadas.
+  \item \textbf{Alcance clínico:} el prototipo es una herramienta académica de apoyo analítico; no es un sistema de diagnóstico ni una solución validada para decisiones médicas.
+  \item \textbf{Calibración y subgrupos:} las probabilidades no están calibradas y la sensibilidad varía según el área y la edad (Capítulo~III), por lo que un umbral único no es adecuado para un uso aplicado.
+\end{itemize}
+
+\input{capitulos/extra-cap4}
+
+\section{Recomendaciones y Trabajos Futuros}
+\subsection{Recomendaciones inmediatas}
+\begin{itemize}
+  \item \textbf{Decidir el futuro del formulario individual:} mantenerlo solo como ilustración o reemplazarlo por una carga de un registro completo.
+  \item \textbf{Proteger la API si se usa con datos no públicos:} agregar autenticación, restringir el origen de las solicitudes y definir una política de retención de los archivos de resultado.
+\end{itemize}
+
+\subsection{Trabajos futuros}
+\begin{itemize}
+  \item Rehacer la imputación dentro del \textit{Pipeline} a partir de la base original, para cuantificar su efecto, y evaluar con ponderación muestral.
+  \item Validar con una fuente independiente, como la ENDI, con una variable objetivo comparable.
+  \item Calibrar las probabilidades y analizar la interpretabilidad con métodos como SHAP.
+  \item Contrastar el desempeño con profesionales de salud antes de cualquier uso aplicado.
+\end{itemize}

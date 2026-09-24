@@ -10,13 +10,13 @@ client = TestClient(app)
 
 
 def test_health():
-    r = client.get("/health")
+    r = client.get("/api/health")
     assert r.status_code == 200
     assert r.json() == {"status": "OK"}
 
 
 def test_features_devuelve_114_variables():
-    r = client.get("/features")
+    r = client.get("/api/features")
     assert r.status_code == 200
     body = r.json()
     assert body["numero_variables"] == 114
@@ -28,7 +28,7 @@ def test_predict_con_fila_real_devuelve_esquema_esperado():
     df = pd.read_csv(ruta)
     fila = df.iloc[0][Predictor.features()].to_dict()
 
-    r = client.post("/predict", json=fila)
+    r = client.post("/api/predict", json=fila)
     assert r.status_code == 200
     body = r.json()
     assert body["prediccion"] in (0, 1)
@@ -44,7 +44,7 @@ def test_predict_probabilidad_coincide_con_el_modelo_configurado():
     df = pd.read_csv(ruta)
     fila = df.iloc[0][Predictor.features()].to_dict()
 
-    r = client.post("/predict", json=fila)
+    r = client.post("/api/predict", json=fila)
     prob_api = r.json()["probabilidad"]
 
     modelo_directo = joblib.load(MODEL_PATH)

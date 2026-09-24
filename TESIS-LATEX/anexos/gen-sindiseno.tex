@@ -1,0 +1,12 @@
+\begin{table}[H]
+  \caption{Comparación del modelo final con una versión sin las variables de diseño muestral.}
+  \label{tab:sindiseno}
+  \tablabase\scriptsize
+  \begin{tabular}{|p{5.6cm}|c|c|c|c|c|c|}
+    \hline
+    \enc{Modelo} & \enc{ROC-AUC} & \enc{PR-AUC} & \enc{Sens.} & \enc{Espec.} & \enc{Prec.} & \enc{Ex. bal.} \\ \hline
+    Modelo final (con 114 variables), umbral 0.42 & 0.677 & 0.409 & 0.693 & 0.550 & 0.335 & 0.621 \\ \hline
+    Sin \texttt{factor\_expansion} ni \texttt{estrato} (112 variables), umbral 0.42 & 0.679 & 0.408 & 0.717 & 0.540 & 0.338 & 0.629 \\ \hline
+    Sin variables de diseño, umbral propio 0.40 & 0.679 & 0.408 & 0.777 & 0.456 & 0.319 & 0.617 \\ \hline
+  \end{tabular}
+\end{table}

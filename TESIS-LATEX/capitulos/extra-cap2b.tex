@@ -1,0 +1,57 @@
+\subsection{Proceso propuesto (TO-BE)}
+Frente al proceso actual (Figura~\ref{fig:asis}), el prototipo automatiza la preparación y agrega la clasificación individual y la consulta de métricas (Figura~\ref{fig:tobe}).
+
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[font=\footnotesize, node distance=5mm,
+    caja/.style={draw=black!60, rounded corners=2pt, align=center, text width=2.4cm, minimum height=1.4cm, fill=white},
+    flecha/.style={-{Stealth[length=2mm]}, black!60}]
+    \node[caja] (a) {Microdatos ENSANUT 2018};
+    \node[caja, right=of a] (b) {Pipeline reproducible de limpieza};
+    \node[caja, right=of b] (c) {Entrenamiento y evaluación por clase};
+    \node[caja, right=of c] (d) {API REST y tablero web};
+    \node[caja, below=7mm of d] (e) {Consulta de predicción, métricas e indicadores};
+    \draw[flecha] (a) -- (b); \draw[flecha] (b) -- (c); \draw[flecha] (c) -- (d); \draw[flecha] (d) -- (e);
+  \end{tikzpicture}
+  \caption{Flujo propuesto (TO-BE) con el prototipo. Elaboración propia.}
+  \label{fig:tobe}
+\end{figure}
+
+\subsection{Casos de uso}
+La Figura~\ref{fig:cu} presenta los casos de uso y la Tabla~\ref{tab:cu} los relaciona con los requerimientos.
+
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[font=\footnotesize, node distance=6mm,
+    actor/.style={draw=black!70, rounded corners=1pt, align=center, minimum width=2.6cm, minimum height=1.0cm, fill=black!6},
+    cu/.style={draw=black!60, ellipse, align=center, text width=3.4cm, inner sep=1pt, fill=white},
+    linea/.style={black!60}]
+    \node[actor] (u) {Usuario\\ (analista)};
+    \node[actor, below=28mm of u] (d) {Desarrollador};
+    \node[cu, right=32mm of u, yshift=12mm] (c1) {CU1. Consultar indicadores por provincia};
+    \node[cu, below=4mm of c1] (c2) {CU2. Clasificar un caso individual};
+    \node[cu, below=4mm of c2] (c3) {CU3. Clasificar un archivo de casos};
+    \node[cu, below=4mm of c3] (c4) {CU4. Consultar métricas del modelo};
+    \node[cu, below=4mm of c4] (c5) {CU5. Consultar la documentación de la API};
+    \foreach \c in {c1,c2,c3,c4} \draw[linea] (u) -- (\c);
+    \draw[linea] (d) -- (c5); \draw[linea] (d) -- (c4);
+  \end{tikzpicture}
+  \caption{Casos de uso del prototipo. Elaboración propia.}
+  \label{fig:cu}
+\end{figure}
+
+\begin{table}[H]
+  \caption{Casos de uso y requerimientos asociados.}
+  \label{tab:cu}
+  \tablabase\small
+  \begin{tabular}{|c|p{5.6cm}|p{4.2cm}|c|}
+    \hline
+    \enc{ID} & \enc{Caso de uso} & \enc{Servicio} & \enc{Req.}\\ \hline
+    CU1 & Consultar indicadores por provincia & \texttt{GET /dashboard} & RF6\\ \hline
+    CU2 & Clasificar un caso individual & \texttt{POST /predict} & RF3\\ \hline
+    CU3 & Clasificar un archivo de casos & \texttt{POST /predict-file} & RF4\\ \hline
+    CU4 & Consultar métricas del modelo & \texttt{GET /dashboard/metricas} & RF5\\ \hline
+    CU5 & Consultar la documentación & \texttt{GET /docs} & RF7\\ \hline
+  \end{tabular}
+\end{table}
+

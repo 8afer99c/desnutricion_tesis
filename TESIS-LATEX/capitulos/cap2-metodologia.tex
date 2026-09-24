@@ -1,0 +1,298 @@
+\chapter{Metodología}
+
+\section{Diagnóstico de la Situación Actual}
+Este diagnóstico describe cómo se aprovechan hoy los microdatos de la ENSANUT 2018 y qué características de los datos condicionan el desarrollo. El proceso actual se reconstruyó a partir de la documentación oficial de la encuesta y del trabajo previo de exploración del autor; no se midieron tiempos de ejecución ni se entrevistó a usuarios, por lo que esos aspectos se declaran como limitación.
+
+\subsection{Proceso actual (AS-IS)}
+La Tabla~\ref{tab:asis} resume los elementos del proceso y la Figura~\ref{fig:asis} su flujo.
+
+\begin{table}[H]
+  \caption{Proceso actual de aprovechamiento de los microdatos de la ENSANUT 2018.}
+  \label{tab:asis}
+  \tablabase\small
+  \begin{tabular}{|p{3.0cm}|p{10.6cm}|}
+    \hline
+    \enc{Elemento} & \enc{Descripción}\\ \hline
+    Usuarios & Investigadores, estudiantes y analistas que consultan la ENSANUT.\\ \hline
+    Fuentes & Microdatos públicos del INEC (módulo de salud de la niñez), diccionario de datos y metadatos de la encuesta.\\ \hline
+    Herramientas & Tablas y paneles publicados por el INEC; para análisis propios, hojas de cálculo o software estadístico. No se identificó una herramienta específica en la UTI.\\ \hline
+    Salidas & Prevalencias por grupo (área, etnia, quintil de ingresos). No hay clasificación individual ni métricas por clase.\\ \hline
+    Responsables & INEC (publicación); el analista (procesamiento e interpretación).\\ \hline
+    Limitaciones & Códigos numéricos que requieren el diccionario; \num{2017} registros sin variable objetivo; desbalance de clases; procesamiento manual difícil de reproducir.\\ \hline
+  \end{tabular}
+\end{table}
+
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[font=\footnotesize, node distance=5mm,
+    caja/.style={draw=black!60, rounded corners=2pt, align=center, text width=3.0cm, minimum height=1.3cm, fill=white},
+    flecha/.style={-{Stealth[length=2mm]}, black!60}]
+    \node[caja] (a) {El INEC publica microdatos y diccionario};
+    \node[caja, right=of a] (b) {Descarga y codificación manual};
+    \node[caja, right=of b] (c) {Análisis descriptivo (prevalencias)};
+    \node[caja, right=of c] (d) {Informe o panel de indicadores};
+    \draw[flecha] (a) -- (b); \draw[flecha] (b) -- (c); \draw[flecha] (c) -- (d);
+  \end{tikzpicture}
+  \caption{Flujo actual (AS-IS) de aprovechamiento de los microdatos de la ENSANUT. Elaboración propia.}
+  \label{fig:asis}
+\end{figure}
+
+\subsection{Hallazgos sobre los datos}
+La exploración inicial de la base produjo los resultados de la Tabla~\ref{tab:datos}. El hallazgo con mayor efecto metodológico fue que el \SI{9.8}{\percent} de los registros no tenía medida la variable objetivo.
+
+\begin{table}[H]
+  \caption{Características de la base de datos.}
+  \label{tab:datos}
+  \tablabase\small
+  \begin{tabular}{|p{8.2cm}|r|}
+    \hline
+    \enc{Característica} & \enc{Valor}\\ \hline
+    Registros originales (módulo de salud de la niñez) & \num{20510}\\ \hline
+    Variables originales & 350\\ \hline
+    Registros sin variable objetivo medida & \num{2017} (\SI{9.8}{\percent})\\ \hline
+    Registros del modelo (con variable objetivo) & \num{18493}\\ \hline
+    Predictores del modelo & 114\\ \hline
+    Casos con desnutrición crónica (clase 1) & \num{4560} (\SI{24.7}{\percent})\\ \hline
+    Casos sin desnutrición crónica (clase 0) & \num{13933} (\SI{75.3}{\percent})\\ \hline
+    Rango de edad & 0 a 59 meses\\ \hline
+    Registros de Tungurahua con variable objetivo & 531 (164 casos; \SI{30.9}{\percent})\\ \hline
+    Predictores con valores ausentes en la base original & 84 de 114 (32 con más del \SI{10}{\percent})\\ \hline
+  \end{tabular}
+\end{table}
+
+\subsection{Síntesis del diagnóstico}
+Del diagnóstico se derivan tres necesidades: (i) un procedimiento de preparación reproducible que excluya, y no imponga, la variable objetivo faltante; (ii) una evaluación con métricas por clase que considere el desbalance; y (iii) un medio de consulta (API y tablero) que permita usar el modelo y revisar su desempeño. Estas necesidades sustentan los requerimientos de la sección correspondiente.
+
+\section{Metodología de Desarrollo o Implementación}
+\subsection{Enfoque de investigación}
+La investigación es aplicada, cuantitativa, no experimental y transversal, porque usa datos secundarios de una sola medición para construir y evaluar un clasificador. El nivel de análisis es de clasificación con componente correlacional; no se buscan relaciones causales.
+
+\subsection{Metodología OSEMN}
+OSEMN se ejecutó como proceso de cinco fases (Figura~\ref{fig:osemn}). La Tabla~\ref{tab:osemn} indica, para cada fase, sus entradas, actividades, decisiones, salidas y evidencia. Los scripts y notebooks citados están en el repositorio del proyecto (Anexo~E).
+
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[font=\footnotesize, node distance=4mm,
+    caja/.style={draw=black!60, rounded corners=2pt, align=center, text width=2.3cm, minimum height=1.6cm, fill=white},
+    flecha/.style={-{Stealth[length=2mm]}, black!60}]
+    \node[caja] (o) {\textbf{Obtener}\\ ENSANUT 2018 (CSV)};
+    \node[caja, right=of o] (s) {\textbf{Limpiar}\\ Base de \num{18493} registros};
+    \node[caja, right=of s] (e) {\textbf{Explorar}\\ Perfil y control de fuga};
+    \node[caja, right=of e] (m) {\textbf{Modelar}\\ Comparación y selección};
+    \node[caja, right=of m] (n) {\textbf{Interpretar}\\ Métricas, API y tablero};
+    \foreach \a/\b in {o/s,s/e,e/m,m/n} \draw[flecha] (\a) -- (\b);
+  \end{tikzpicture}
+  \caption{Fases de la metodología OSEMN aplicadas en el proyecto. Elaboración propia.}
+  \label{fig:osemn}
+\end{figure}
+
+\begingroup
+\scriptsize\setlength{\tabcolsep}{3pt}\arrayrulecolor{black!55}\renewcommand{\arraystretch}{1.15}
+\begin{longtable}{|p{1.3cm}|p{2.0cm}|p{3.4cm}|p{2.6cm}|p{2.2cm}|p{1.9cm}|}
+  \caption{Fases de OSEMN ejecutadas: entradas, actividades, decisiones, salidas y evidencia.}
+  \label{tab:osemn}\\ \hline
+  \enc{Fase} & \enc{Entradas} & \enc{Actividades} & \enc{Decisiones} & \enc{Salidas} & \enc{Evidencia}\\ \hline
+  \endfirsthead
+  \tablacont{6}\hline
+  \enc{Fase} & \enc{Entradas} & \enc{Actividades} & \enc{Decisiones} & \enc{Salidas} & \enc{Evidencia}\\ \hline
+  \endhead
+  \hline\endfoot
+  Obtener & Microdatos ENSANUT 2018; diccionario y metadatos & Carga del CSV; revisión de estructura y de tipos & Usar solo ENSANUT en el modelo; ENDI solo exploratoria & Base bruta: \num{20510} $\times$ 350 & Notebook de limpieza\\ \hline
+  Limpiar & Base bruta & Renombrar variables; convertir valores especiales en nulos; eliminar registros sin variable objetivo; definir 114 predictores & Excluir (no imputar) la variable objetivo faltante & Base del modelo: \num{18493} $\times$ 115 & Script de limpieza\\ \hline
+  Explorar & Base del modelo & Distribuciones y prevalencias; comparación Tungurahua y nacional; revisión de fuga por variable & Mantener variables sin señal de fuga (AUC univariado $<$ 0.95) & Perfil de datos; lista de limitaciones & Script de revisión de fuga; notebook EDA\\ \hline
+  Modelar & Base del modelo & Partición 80/20 estratificada (semilla 42); preprocesamiento en \textit{Pipeline}; 4 algoritmos con manejo de desbalance; búsqueda de hiperparámetros con validación cruzada; ajuste del umbral & Selección por PR-AUC; umbral que maximiza F1 de la clase 1 (validación cruzada en entrenamiento) & \texttt{modelo\_v2.joblib}; \texttt{metricas\_v2.json} & Script de entrenamiento\\ \hline
+  Interpretar & Modelo y particiones & Métricas por clase con intervalos; importancia de variables; API y tablero; pruebas funcionales & Reportar sobreajuste y límites & Resultados (cap. III) y prototipo & Anexos A, C y D\\ \hline
+\end{longtable}
+\endgroup
+
+\subsection{Protocolo experimental}
+La base del modelo se dividió en \num{14794} registros de entrenamiento y \num{3699} de prueba (partición 80/20 estratificada por la variable objetivo, semilla 42). El preprocesamiento se encapsuló en un \textit{Pipeline} de scikit-learn \cite{pedregosa2011scikit}: variables numéricas con imputación por mediana y estandarización, y variables categóricas con imputación por moda y codificación \textit{one-hot}. La estandarización y la codificación se ajustan solo con los datos de entrenamiento. La imputación del \textit{Pipeline}, en cambio, no tiene efecto porque la base del modelo ya no contiene nulos: los faltantes se imputaron antes de la partición (Tabla~\ref{tab:reglas}).
+
+Para el desbalance se usó ponderación de clases (\texttt{class\_weight="balanced"} en los modelos que la admiten y \texttt{scale\_pos\_weight} en XGBoost). Los hiperparámetros del modelo seleccionado se buscaron con búsqueda aleatoria \cite{bergstra2012random} y validación cruzada estratificada de 5 particiones sobre el entrenamiento, con PR-AUC como criterio. El umbral de decisión se eligió como el valor que maximiza el F1 de la clase positiva con predicciones de validación cruzada sobre el entrenamiento. La comparación de los cuatro modelos base se calculó sobre la partición de prueba, lo que puede hacer levemente optimista el PR-AUC reportado; esta limitación se retoma en el Capítulo~III.
+
+\input{capitulos/extra-cap2a}
+
+\subsection{Métricas de evaluación}
+Con VP, VN, FP y FN los verdaderos positivos, verdaderos negativos, falsos positivos y falsos negativos de la clase 1 (con desnutrición crónica), se calcularon:
+\begin{equation}
+  \text{Sensibilidad} = \frac{VP}{VP + FN}
+  \eqindice{Sensibilidad (recall)}
+\end{equation}
+\begin{equation}
+  \text{Especificidad} = \frac{VN}{VN + FP}
+  \eqindice{Especificidad}
+\end{equation}
+\begin{equation}
+  \text{Precisión} = \frac{VP}{VP + FP}
+  \eqindice{Precisión}
+\end{equation}
+\begin{equation}
+  F_1 = 2\,\frac{\text{Precisión}\times\text{Sensibilidad}}{\text{Precisión}+\text{Sensibilidad}}
+  \eqindice{F1 de la clase positiva}
+\end{equation}
+\begin{equation}
+  \text{Exactitud balanceada} = \frac{\text{Sensibilidad} + \text{Especificidad}}{2}
+  \eqindice{Exactitud balanceada}
+\end{equation}
+Además se reportan el ROC-AUC y el PR-AUC. La clase prioritaria es la 1 (niños con desnutrición crónica) porque omitirla (falso negativo) es el error más costoso en una aplicación de tamizaje; por eso se prioriza la sensibilidad, aceptando una precisión menor.
+
+\section{Técnicas e Instrumentos de Recolección de Información}
+La Tabla~\ref{tab:tecnicas} lista las técnicas realmente aplicadas. No se realizaron entrevistas, encuestas ni validación con expertos, por lo que no se presentan resultados de ese tipo.
+
+\begin{table}[H]
+  \caption{Técnicas e instrumentos aplicados.}
+  \label{tab:tecnicas}
+  \tablabase\small
+  \begin{tabular}{|p{3.2cm}|p{5.7cm}|p{4.1cm}|}
+    \hline
+    \enc{Técnica} & \enc{Instrumento} & \enc{Uso en el proyecto}\\ \hline
+    Revisión documental & Artículos indexados (IEEE Xplore, ScienceDirect, MDPI, PubMed) según el protocolo del Capítulo~I & Estado del arte y elección de algoritmos\\ \hline
+    Análisis de microdatos & Base ENSANUT 2018 (CSV), diccionario y metadatos; \textit{pandas} & Caracterización y limpieza\\ \hline
+    Experimentación computacional & Notebooks y scripts en Python; scikit-learn y XGBoost & Entrenamiento y comparación de modelos\\ \hline
+    Pruebas funcionales & Casos de prueba sobre la API (\textit{TestClient} de FastAPI) y pruebas automáticas con \textit{pytest} & Verificación del servicio (Anexo~C)\\ \hline
+  \end{tabular}
+\end{table}
+
+\section{Requerimientos del Proyecto}
+Los requerimientos se formularon de modo que cada uno tenga un criterio de aceptación comprobable. Su cumplimiento se verifica en el Capítulo~III.
+
+\subsection{Requerimientos Funcionales}
+\begin{table}[H]
+  \caption{Requerimientos funcionales y criterios de aceptación.}
+  \label{tab:rf}
+  \tablabase\footnotesize
+  \begin{tabular}{|c|p{4.1cm}|p{6.6cm}|c|}
+    \hline
+    \enc{ID} & \enc{Requerimiento} & \enc{Criterio de aceptación} & \enc{Prioridad}\\ \hline
+    RF1 & Preprocesamiento reproducible & Imputación y escalado ajustados solo con el entrenamiento; resultados idénticos con semilla 42. & Alta\\ \hline
+    RF2 & Comparación de modelos & Cuatro algoritmos evaluados con la misma partición y reporte de sensibilidad, especificidad, precisión, F1, exactitud balanceada, ROC-AUC y PR-AUC. & Alta\\ \hline
+    RF3 & Predicción individual & \texttt{POST /predict} con las 114 variables devuelve clase, probabilidad y nivel de riesgo; responde HTTP 400 si las variables no coinciden. & Alta\\ \hline
+    RF4 & Predicción masiva & \texttt{POST /predict-file} recibe un archivo y devuelve un \texttt{.xlsx} con una fila por registro. & Media\\ \hline
+    RF5 & Consulta de métricas & \texttt{GET /dashboard/metricas} devuelve las métricas del archivo \texttt{metricas\_v2.json}. & Alta\\ \hline
+    RF6 & Indicadores del tablero & \texttt{GET /dashboard} admite filtro por provincia; \texttt{GET /dashboard/importancia} lista la importancia de variables. & Media\\ \hline
+    RF7 & Documentación interactiva & \texttt{GET /docs} muestra la documentación OpenAPI. & Media\\ \hline
+    RF8 & Selección de versión del modelo & La variable de entorno \texttt{MODEL\_VERSION} (v1 o v2) define el modelo activo; por defecto v2. & Baja\\ \hline
+  \end{tabular}
+\end{table}
+
+\subsection{Requerimientos No Funcionales}
+\begin{table}[H]
+  \caption{Requerimientos no funcionales y criterios de aceptación.}
+  \label{tab:rnf}
+  \tablabase\footnotesize
+  \begin{tabular}{|c|p{2.6cm}|p{7.5cm}|c|}
+    \hline
+    \enc{ID} & \enc{Atributo} & \enc{Criterio de aceptación} & \enc{Prioridad}\\ \hline
+    RNF1 & Validación de entradas & El \SI{100}{\percent} de las solicitudes con variables faltantes o sobrantes se rechaza con HTTP 400. & Alta\\ \hline
+    RNF2 & Rendimiento & Latencia mediana de \texttt{POST /predict} $\leq$ 200 ms, medida sobre 100 solicitudes. & Media\\ \hline
+    RNF3 & Disponibilidad & \texttt{GET /health} responde HTTP 200 mientras el servicio esté desplegado. & Media\\ \hline
+    RNF4 & Seguridad y acceso & Autenticación y control de acceso a la API (no implementada por decisión de alcance; Capítulo~III). & Media\\ \hline
+    RNF5 & Reproducibilidad & Semilla fija (42) y versiones de librerías fijadas en \texttt{requirements.txt}. & Alta\\ \hline
+    RNF6 & Mantenibilidad & Código separado por módulos y al menos 5 pruebas automáticas aprobadas. & Media\\ \hline
+    RNF7 & Uso responsable & La interfaz y los documentos indican que es una herramienta académica exploratoria y no un sistema de diagnóstico. & Alta\\ \hline
+  \end{tabular}
+\end{table}
+
+\section{Diseño de la Solución}
+\subsection{Arquitectura y flujo de datos}
+La solución tiene cuatro componentes (Figura~\ref{fig:arquitectura}): (1) el pipeline de datos y modelado, que produce (2) los artefactos del modelo (\texttt{modelo\_v2.joblib} y \texttt{metricas\_v2.json}); (3) la API REST, que carga los artefactos y expone los servicios; y (4) el tablero web, que consume la API. La Figura~\ref{fig:flujo-pred} muestra el flujo de una predicción individual.
+
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[font=\footnotesize, node distance=6mm,
+    caja/.style={draw=black!60, rounded corners=2pt, align=center, text width=3.5cm, minimum height=1.5cm, fill=white},
+    flecha/.style={-{Stealth[length=2mm]}, black!60}]
+    \node[caja] (d) {\textbf{Datos}\\ ENSANUT 2018 (CSV)};
+    \node[caja, right=of d] (p) {\textbf{1. Pipeline de datos y modelado}\\ Python, scikit-learn};
+    \node[caja, right=of p] (a) {\textbf{2. Artefactos}\\ \texttt{modelo\_v2.joblib}\\ \texttt{metricas\_v2.json}};
+    \node[caja, below=8mm of a] (api) {\textbf{3. API REST}\\ FastAPI};
+    \node[caja, left=of api] (w) {\textbf{4. Tablero web}\\ React};
+    \node[caja, left=of w] (u) {\textbf{Usuario}\\ navegador o cliente HTTP};
+    \draw[flecha] (d) -- (p); \draw[flecha] (p) -- (a); \draw[flecha] (a) -- (api);
+    \draw[flecha] (api) -- (w); \draw[flecha] (w) -- (u);
+  \end{tikzpicture}
+  \caption{Arquitectura y flujo de datos de la solución. Elaboración propia.}
+  \label{fig:arquitectura}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[font=\footnotesize, node distance=4mm,
+    caja/.style={draw=black!60, rounded corners=2pt, align=center, text width=2.2cm, minimum height=1.5cm, fill=white},
+    flecha/.style={-{Stealth[length=2mm]}, black!60}]
+    \node[caja] (c) {Cliente envía JSON con 114 variables};
+    \node[caja, right=of c] (v) {Validación: nombres y cantidad};
+    \node[caja, right=of v] (m) {Pipeline: preprocesador y Random Forest};
+    \node[caja, right=of m] (u) {Probabilidad y umbral 0.42};
+    \node[caja, right=of u] (r) {Respuesta: clase, probabilidad y riesgo};
+    \foreach \a/\b in {c/v,v/m,m/u,u/r} \draw[flecha] (\a) -- (\b);
+    \node[draw=black!60, rounded corners=2pt, align=center, text width=2.5cm, below=6mm of v, font=\scriptsize] (e) {HTTP 400 si no coinciden};
+    \draw[flecha] (v) -- (e);
+  \end{tikzpicture}
+  \caption{Flujo de una predicción individual (\texttt{POST /predict}). Elaboración propia.}
+  \label{fig:flujo-pred}
+\end{figure}
+
+\subsection{Modelo de datos}
+El modelo usa 114 predictores de la ENSANUT agrupados en nueve bloques (Tabla~\ref{tab:vars}); el listado completo está en el Anexo~F. La variable objetivo es \texttt{desnutricion\_cronica}. No se incluyen la talla ni el peso actuales del niño; sí se incluyen dos variables de diseño muestral (\texttt{factor\_expansion} y \texttt{estrato}), que se discuten como limitación en el Capítulo~III.
+
+\begin{table}[H]
+  \caption{Grupos de variables predictoras.}
+  \label{tab:vars}
+  \tablabase\footnotesize
+  \begin{tabular}{|p{4.6cm}|c|p{6.4cm}|}
+    \hline
+    \enc{Grupo} & \enc{N.º} & \enc{Ejemplos}\\ \hline
+    Territorio y demografía & 10 & provincia, área, sexo, edad en meses, etnia y educación de la madre, estrato\\ \hline
+    Orden del hijo & 1 & orden del hijo\\ \hline
+    Embarazo y control prenatal & 25 & controles prenatales, micronutrientes, exámenes, consejería\\ \hline
+    Parto y recién nacido & 19 & tipo de parto, prematuridad, peso y talla al nacer\\ \hline
+    Control posparto & 3 & control posparto y lugar\\ \hline
+    Controles y consejería del niño & 15 & controles por edad, consejería en lactancia y alimentación\\ \hline
+    Lactancia y convivencia & 5 & duración de la lactancia, convivencia con la madre\\ \hline
+    Morbilidad y suplementación & 6 & diarrea, infección respiratoria, hierro, vitamina A\\ \hline
+    Vacunación & 30 & dosis por carné y lugar de vacunación\\ \hline
+    \textbf{Total} & \textbf{114} & \\ \hline
+  \end{tabular}
+\end{table}
+
+\subsection{Contrato de la API}
+La Tabla~\ref{tab:api} presenta los servicios expuestos. Las respuestas de \texttt{/predict} siguen el esquema \texttt{PrediccionResponse}: \texttt{prediccion} (0/1), \texttt{descripcion}, \texttt{probabilidad} y \texttt{riesgo} (BAJO, MEDIO o ALTO).
+
+\begin{table}[H]
+  \caption{Servicios de la API REST.}
+  \label{tab:api}
+  \tablabase\footnotesize
+  \begin{tabular}{|p{3.4cm}|c|p{4.1cm}|p{3.8cm}|}
+    \hline
+    \enc{Ruta} & \enc{Método} & \enc{Entrada} & \enc{Salida y errores}\\ \hline
+    \texttt{/health} & GET & Ninguna & \texttt{\{"status":"OK"\}}\\ \hline
+    \texttt{/info} & GET & Ninguna & Nombre de la API, versión y modelo activo\\ \hline
+    \texttt{/features} & GET & Ninguna & Número y lista de variables del modelo\\ \hline
+    \texttt{/predict} & POST & JSON con las 114 variables & Clase, probabilidad y riesgo; HTTP 400 si no coinciden\\ \hline
+    \texttt{/predict-file} & POST & Archivo (formulario multipart) & Archivo \texttt{.xlsx} con predicciones\\ \hline
+    \texttt{/dashboard} & GET & Provincia opcional (nombre) & Registros de prueba, casos observados y clasificados, sensibilidad y precisión\\ \hline
+    \texttt{/dashboard/}\allowbreak\texttt{metricas} & GET & Ninguna & Métricas del modelo (v2)\\ \hline
+    \texttt{/dashboard/}\allowbreak\texttt{importancia} & GET & Ninguna & Importancia por variable\\ \hline
+    \texttt{/docs} & GET & Ninguna & Documentación interactiva (OpenAPI)\\ \hline
+  \end{tabular}
+\end{table}
+
+\input{capitulos/extra-cap2b}
+
+\section{Justificación Técnica}
+La Tabla~\ref{tab:justif} compara cada tecnología elegida con una alternativa usando criterios verificables. La selección del algoritmo se justifica con los resultados del Capítulo~III, no con ventajas generales.
+
+\begin{table}[H]
+  \caption{Justificación técnica de las decisiones de diseño.}
+  \label{tab:justif}
+  \tablabase\footnotesize
+  \begin{tabular}{|p{2.4cm}|p{2.4cm}|p{2.4cm}|p{5.6cm}|}
+    \hline
+    \enc{Decisión} & \enc{Elegida} & \enc{Alternativa} & \enc{Criterio}\\ \hline
+    Algoritmo final & Random Forest & Regresión logística, árbol, XGBoost & Mayor PR-AUC en la comparación de la Figura~\ref{fig:comparacion}\\ \hline
+    Servicio web & FastAPI & Flask & Validación de tipos y documentación OpenAPI incluidas sin bibliotecas adicionales \cite{ramirez2022deploying}\\ \hline
+    Interfaz & React (aplicación independiente) & Streamlit & Frontend desplegable por separado y personalizable; consume la misma API\\ \hline
+    Persistencia del modelo & \texttt{joblib} (\textit{Pipeline} completo) & Guardar solo el clasificador & El preprocesamiento viaja con el modelo y se evita el desajuste entre entrenamiento y servicio\\ \hline
+  \end{tabular}
+\end{table}

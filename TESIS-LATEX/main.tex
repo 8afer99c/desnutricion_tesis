@@ -1,0 +1,46 @@
+%% ============================================================================
+%%  Trabajo de Titulación — Universidad Tecnológica Indoamérica
+%%  Autor: Fernando José Ochoa Cobeña
+%%  Compilar:  compilar.bat   (pdflatex → bibtex → pdflatex ×2)
+%% ============================================================================
+\documentclass{tesis-uti}
+
+\input{configuracion}                 % datos del trabajo (autor, tema, etc.)
+
+\hypersetup{pdftitle={\TemaTexto},pdfauthor={\Autor}}
+
+\begin{document}
+
+%% --- Preliminares -----------------------------------------------------------
+\input{preliminares/portada}
+\preliminares
+\input{preliminares/autorizacion}
+\input{preliminares/aprobacion-tutor}
+\input{preliminares/declaracion}
+\input{preliminares/aprobacion-lectores}
+\input{preliminares/dedicatoria}
+\input{preliminares/agradecimiento}
+
+\tableofcontents
+\listoftables
+\listoffigures
+\listofequations
+\listofanexos
+
+\input{preliminares/resumen}
+
+%% --- Cuerpo ----------------------------------------------------------------------
+\cuerpoprincipal
+\input{capitulos/cap1-introduccion}
+\input{capitulos/cap2-metodologia}
+\input{capitulos/cap3-implementacion}
+\input{capitulos/cap4-conclusiones}
+
+%% --- Referencias (IEEE) y glosario ------------------------------------------------
+\imprimirreferencias{referencias}
+\input{capitulos/glosario}
+
+%% --- Anexos -------------------------------------------------------------------------
+\input{anexos}
+
+\end{document}

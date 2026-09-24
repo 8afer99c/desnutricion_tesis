@@ -1,0 +1,469 @@
+%% ============================================================================
+%%  Anexos A–I. Cada uno abre con su página divisoria (macro \anexo).
+%%  No se incluyen cartas, actas ni instrumentos de campo: no existe entidad
+%%  receptora ni se aplicaron entrevistas o encuestas (ver Capítulo II).
+%% ============================================================================
+
+%% ----------------------------------------------------------------- ANEXO A
+\anexo{A}{Documentación Técnica del Sistema}
+
+\section*{A.1 Estructura del repositorio}
+\begin{table}[H]
+  \caption{Módulos principales del backend (\texttt{API\_DESNUTRICION/backend}).}
+  \label{tab:modulos}
+  \tablabase\footnotesize
+  \begin{tabular}{|p{4.0cm}|p{9.4cm}|}
+    \hline
+    \enc{Archivo} & \enc{Función}\\ \hline
+    \texttt{app/main.py} & Definición de rutas de la API y validación de solicitudes\\ \hline
+    \texttt{app/predictor.py} & Carga del \textit{Pipeline}, validación de variables y predicción\\ \hline
+    \texttt{app/predict\_file.py} & Procesamiento de archivos para predicción masiva\\ \hline
+    \texttt{app/dashboard.py} & Resumen de indicadores por provincia\\ \hline
+    \texttt{app/analytics.py} & Métricas del modelo e importancia de variables\\ \hline
+    \texttt{app/schemas.py} & Esquema de respuesta de \texttt{/predict}\\ \hline
+    \texttt{app/config.py} & Rutas, versión del modelo y umbral de decisión\\ \hline
+    \texttt{app/utils.py} & Validación de variables y catálogo de provincias\\ \hline
+    \texttt{models/} & \texttt{modelo\_v2.joblib}, \texttt{modelo\_final\_api.joblib} (v1) y \texttt{metricas\_v2.json}\\ \hline
+    \texttt{data/} & Conjunto de prueba (\texttt{test\_v2.csv}) que usa el resumen del tablero y otros datos del proyecto\\ \hline
+    \texttt{tests/} & Pruebas de contrato de la API, de las métricas, del nivel de riesgo, del resumen del tablero y de la lectura de archivos\\ \hline
+  \end{tabular}
+\end{table}
+
+\begin{table}[H]
+  \caption{Módulos principales del tablero (\texttt{API\_DESNUTRICION/frontend/src}).}
+  \label{tab:modulos-front}
+  \tablabase\footnotesize
+  \begin{tabular}{|p{4.8cm}|p{8.6cm}|}
+    \hline
+    \enc{Archivo} & \enc{Función}\\ \hline
+    \texttt{pages/Home.tsx} & Pantalla de inicio\\ \hline
+    \texttt{pages/Dashboard.tsx} & Indicadores por provincia\\ \hline
+    \texttt{pages/PredictionForm.tsx} & Formulario de predicción individual\\ \hline
+    \texttt{pages/BatchPrediction.tsx} & Carga de archivo para predicción masiva\\ \hline
+    \texttt{pages/Metrics.tsx} & Métricas del modelo e importancia de variables\\ \hline
+    \texttt{services/api.ts} & Funciones que llaman a la API con \textit{axios}\\ \hline
+    \texttt{components/} & Barra lateral, contenedores y ayudas emergentes\\ \hline
+  \end{tabular}
+\end{table}
+
+\section*{A.2 Configuración}
+La variable de entorno \texttt{MODEL\_VERSION} selecciona el modelo activo: \texttt{v2} (por defecto) o \texttt{v1}. El umbral de decisión de la versión v2 se lee de \texttt{metricas\_v2.json} (0.42); la versión v1 usa 0.5. El servicio se inicia en Render con \texttt{uvicorn app.main:app --host 0.0.0.0 --port \$PORT}, y el tablero usa la variable \texttt{VITE\_API\_URL} para ubicar la API cuando se despliega en Vercel.
+
+En la rama \texttt{main}, que es la desplegada, la API se expone bajo el prefijo \texttt{/api} (por ejemplo, \texttt{/api/predict}) y el mismo servicio entrega el tablero compilado. En \texttt{pipeline-v2-fixes}, con la que se ejecutaron los casos de prueba del Anexo~C, las rutas no llevan prefijo. En este documento las rutas se escriben sin prefijo; los cambios posteriores a las pruebas (nivel de riesgo, resumen del tablero, lectura de archivos y plantilla de ejemplo) se verificaron también en \texttt{main} con el prefijo \texttt{/api}.
+
+\begin{table}[H]
+  \caption{Dependencias del backend (\texttt{requirements.txt}).}
+  \label{tab:deps}
+  \tablabase\small
+  \begin{tabular}{|p{4.0cm}|p{3.0cm}|p{5.6cm}|}
+    \hline
+    \enc{Paquete} & \enc{Versión} & \enc{Uso}\\ \hline
+    fastapi & 0.116.1 & Servicio REST y documentación OpenAPI\\ \hline
+    uvicorn & 0.35.0 & Servidor ASGI\\ \hline
+    pandas / numpy & $\geq$ 2.2.3 / $\geq$ 2.1.0 & Manejo de datos\\ \hline
+    scikit-learn & 1.6.1 & \textit{Pipeline} y modelos\\ \hline
+    xgboost & 2.1.4 & Modelo v1 y candidato\\ \hline
+    joblib & 1.5.1 & Carga del modelo serializado\\ \hline
+    openpyxl & 3.1.5 & Escritura de resultados \texttt{.xlsx}\\ \hline
+    python-multipart & 0.0.20 & Recepción de archivos\\ \hline
+    jinja2 & 3.1.6 & Plantilla de la ruta raíz\\ \hline
+  \end{tabular}
+\end{table}
+
+\section*{A.3 Formato de entrada de \texttt{/predict}}
+La solicitud debe contener exactamente las 114 variables del modelo (\texttt{GET /features} las lista y \texttt{GET /example} devuelve una plantilla con las 114 variables en \texttt{null}). Las variables categóricas se envían como texto con las mismas categorías del entrenamiento y las numéricas como números. Los valores no informados pueden enviarse como \texttt{null}; el \textit{Pipeline} los imputa con la mediana o la moda del entrenamiento.
+
+\noindent\begin{minipage}{\linewidth}
+\begin{lstlisting}[frame=single,basicstyle=\ttfamily\footnotesize]
+POST /predict   (cuerpo JSON con las 114 variables)
+{ "area": "Urbano", "provincia": 18, "sexo": "Mujer",
+  "edad_meses": 14, "peso_nacer_gramos": 3100, ... }
+
+Respuesta HTTP 200:
+{ "prediccion": 1,
+  "descripcion": "Con desnutricion cronica",
+  "probabilidad": 0.437,
+  "riesgo": "MEDIO" }
+
+Respuesta HTTP 400 (variables que no coinciden):
+{ "detail": { "mensaje": "Las variables enviadas no
+  coinciden con el modelo", "detalle": { ... } } }
+\end{lstlisting}
+\end{minipage}
+
+\section*{A.4 Niveles de clase y de riesgo}
+La clase se asigna con el umbral de 0.42 (probabilidad $\geq$ 0.42: clase 1). El nivel de riesgo se deriva del mismo umbral: BAJO si la probabilidad es menor que 0.42 (clase 0), MEDIO si está entre 0.42 y 0.60 y ALTO si es $\geq$ 0.60. Por tanto, ningún caso con clase 1 figura con riesgo BAJO. El corte de ALTO equivale aproximadamente al percentil 95 de las probabilidades del conjunto de prueba.
+
+La versión evaluada inicialmente usaba cortes fijos de 0.50 y 0.80, independientes del umbral: en el conjunto de prueba, 1050 de las 1887 clasificaciones positivas (\SI{55.6}{\percent}) figuraban con riesgo BAJO, y ALTO nunca se alcanzaba (la probabilidad máxima fue 0.747). Se corrigió en el commit \texttt{7b37205} de \texttt{pipeline-v2-fixes} y en el \texttt{588d8fe} de \texttt{main} (Anexo~E). La Tabla~\ref{tab:riesgo} muestra la distribución resultante.
+
+\begin{table}[H]
+  \caption{Nivel de riesgo en el conjunto de prueba nacional (n = \num{3699}).}
+  \label{tab:riesgo}
+  \tablabase\small
+  \begin{tabular}{|c|c|c|c|c|}
+    \hline
+    \enc{Nivel} & \enc{Probabilidad} & \enc{Clase} & \enc{Registros} & \enc{Prevalencia observada}\\ \hline
+    BAJO & $<$ 0.42 & 0 & \num{1812} & 0.155\\ \hline
+    MEDIO & 0.42 a $<$ 0.60 & 1 & \num{1702} & 0.314\\ \hline
+    ALTO & $\geq$ 0.60 & 1 & \num{185} & 0.524\\ \hline
+  \end{tabular}
+\end{table}
+
+Los niveles ordenan los casos, pero las probabilidades no están calibradas (Capítulo~III); no deben leerse como riesgo absoluto.
+
+\section*{A.5 Ejecución local}
+\begin{enumerate}
+  \item Backend: crear un entorno virtual, ejecutar \texttt{pip install -r requirements.txt} y luego \texttt{python -m uvicorn app.main:app --reload} (puerto 8000; documentación en \texttt{/docs}).
+  \item Frontend: en \texttt{frontend}, ejecutar \texttt{npm install} y \texttt{npm run dev} (puerto 5173).
+\end{enumerate}
+
+%% ----------------------------------------------------------------- ANEXO B
+\anexo{B}{Manual de Usuario}
+
+\section*{B.1 Aviso de uso}
+\noindent\textbf{Herramienta académica exploratoria.} Las salidas del sistema son estimaciones estadísticas obtenidas con un modelo de Machine Learning entrenado con datos de la ENSANUT 2018. No constituyen un diagnóstico clínico, no sustituyen la evaluación de un profesional de salud y no deben usarse para decidir sobre un niño concreto. Este aviso aparece en la parte superior de todas las pantallas.
+
+\section*{B.2 Requisitos de acceso}
+El tablero se usa desde un navegador web actual. En ejecución local se abre en \texttt{http://localhost:5173} con la API activa en \texttt{http://localhost:8000}.
+
+\section*{B.3 Navegación}
+La barra lateral da acceso a los cinco módulos de la Tabla~\ref{tab:modulos-usuario}. En su parte inferior indica el modelo activo, que se consulta a la API en tiempo real.
+
+\begin{table}[H]
+  \caption{Módulos del tablero y su finalidad.}
+  \label{tab:modulos-usuario}
+  \tablabase\small
+  \begin{tabular}{|p{3.6cm}|p{5.8cm}|p{3.6cm}|}
+    \hline
+    \enc{Módulo} & \enc{Finalidad} & \enc{Servicio de la API}\\ \hline
+    Inicio & Presentación y alcance & \texttt{GET /info}\\ \hline
+    Clasificación individual & Ilustración con 10 datos & \texttt{POST /predict}\\ \hline
+    Clasificación por archivo & Clasificar un CSV de casos & \texttt{POST /predict-file}\\ \hline
+    Indicadores & Clasificaciones por provincia & \texttt{GET /dashboard}\\ \hline
+    Métricas del modelo & Desempeño e importancia & \texttt{GET /dashboard/}\allowbreak\texttt{metricas}\\ \hline
+  \end{tabular}
+\end{table}
+
+\section*{B.4 Inicio}
+Presenta el alcance del sistema (niños de 0 a 59 meses, ENSANUT 2018, evaluación separada para Tungurahua) y sus límites (Figura~\ref{fig:ui-inicio}).
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{figuras/ui-inicio.png}
+  \caption{Pantalla de inicio del tablero.}
+  \label{fig:ui-inicio}
+\end{figure}
+
+\section*{B.5 Indicadores}
+Muestra, para todo el país o para la provincia elegida en el selector \textit{Ámbito}, los registros de prueba, los casos observados de desnutrición crónica, los que clasifica el modelo y la sensibilidad y la precisión en ese ámbito (Figura~\ref{fig:ui-dashboard}). \textbf{Interpretación:} las cifras se calculan con el conjunto de prueba, es decir, con registros que el modelo no usó para entrenar; no son la prevalencia poblacional, porque la muestra no está ponderada. Cuando el ámbito tiene menos de 150 registros (en Tungurahua, 112), la pantalla advierte que la sensibilidad y la precisión son inestables.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{figuras/ui-dashboard.png}
+  \caption{Módulo de indicadores, con el ámbito Tungurahua.}
+  \label{fig:ui-dashboard}
+\end{figure}
+
+\section*{B.6 Clasificación individual}
+El formulario recoge diez datos: edad en meses, sexo, área, provincia, peso y talla al nacer, edad gestacional al nacer, meses de lactancia, y diarrea e infección respiratoria en las dos últimas semanas (Figura~\ref{fig:ui-prediccion}). Las otras 104 variables se envían como nulas y el modelo las completa con la mediana o la moda del entrenamiento. El resultado muestra la clasificación estimada, la puntuación del modelo (no calibrada) y cuántas variables se informaron. \textbf{Uso ilustrativo:} con tan pocos datos la puntuación varía poco (en 512 combinaciones de prueba entre 0.375 y 0.515), por lo que no es interpretable para un niño concreto. Para una clasificación con el modelo evaluado se debe usar la clasificación por archivo.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{figuras/ui-prediccion.png}
+  \caption{Módulo de clasificación individual con su resultado.}
+  \label{fig:ui-prediccion}
+\end{figure}
+
+\section*{B.7 Clasificación por archivo}
+Pasos (Figura~\ref{fig:ui-masiva}):
+\begin{enumerate}
+  \item Descargar la plantilla de columnas con el enlace de la pantalla (un CSV solo con el encabezado de las 114 variables).
+  \item Completar un niño por fila. Las variables categóricas deben usar las categorías del entrenamiento (Anexo~F).
+  \item Seleccionar el archivo (solo formato CSV) y pulsar \textit{Clasificar archivo}.
+  \item Se descarga \texttt{resultado\_clasificacion.xlsx} con las columnas originales más \texttt{prediccion} (0 o 1), \texttt{probabilidad} y \texttt{riesgo}.
+\end{enumerate}
+Si faltan columnas, la pantalla muestra un mensaje y la lista de las faltantes, y no descarga ningún archivo (Figura~\ref{fig:ui-masiva-error}).
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{figuras/ui-masiva.png}
+  \caption{Clasificación por archivo: archivo procesado con éxito.}
+  \label{fig:ui-masiva}
+\end{figure}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{figuras/ui-masiva-error.png}
+  \caption{Clasificación por archivo: mensaje cuando el CSV tiene columnas faltantes.}
+  \label{fig:ui-masiva-error}
+\end{figure}
+
+\section*{B.8 Métricas del modelo}
+Muestra las métricas de la clase con desnutrición crónica en el conjunto de prueba interno (sensibilidad, precisión, F1, exactitud balanceada, ROC-AUC y PR-AUC) y las diez variables más importantes (Figura~\ref{fig:ui-metricas}). Las variables de diseño muestral se marcan en rojo. La importancia no implica causalidad.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{figuras/ui-metricas.png}
+  \caption{Módulo de métricas del modelo.}
+  \label{fig:ui-metricas}
+\end{figure}
+
+\section*{B.9 Mensajes frecuentes}
+\begin{table}[H]
+  \caption{Mensajes frecuentes y su causa.}
+  \label{tab:mensajes}
+  \tablabase\small
+  \begin{tabular}{|p{5.0cm}|p{8.4cm}|}
+    \hline
+    \enc{Mensaje o comportamiento} & \enc{Causa y acción}\\ \hline
+    ``El archivo no contiene todas las variables requeridas'' & Faltan columnas en el CSV. Usar la plantilla de columnas\\ \hline
+    ``Ocurrió un error al procesar el archivo'' & El archivo no es un CSV válido o tiene categorías no reconocidas. Revisar el formato\\ \hline
+    ``API sin conexión'' (barra lateral) & La API no está activa o la dirección configurada es incorrecta\\ \hline
+    ``Provincia no válida'' & El ámbito debe elegirse de la lista; la API espera el nombre de la provincia\\ \hline
+    Riesgo BAJO con clase estimada positiva (en el Excel) & Ocurría en la versión inicial del servicio; corregido (A.4). Si aparece en un despliegue antiguo, usar la clase\\ \hline
+  \end{tabular}
+\end{table}
+
+%% ----------------------------------------------------------------- ANEXO C
+\anexo{C}{Evidencias de Pruebas del Sistema}
+
+Las pruebas de la API se ejecutaron el 20 de septiembre de 2026 sobre el backend en ejecución local (\textit{TestClient} de FastAPI, modelo v2), con un registro real del conjunto de prueba como entrada. Las pruebas del tablero (CP15 a CP17) se ejecutaron el mismo día en un navegador automatizado (Playwright) sobre la interfaz ya corregida. Además se ejecutaron las 22 pruebas automáticas del repositorio (5 de contrato, 3 del nivel de riesgo, 5 del resumen del tablero, 8 de la lectura de archivos y 1 de la plantilla de ejemplo), todas aprobadas.
+
+\begingroup
+\scriptsize\setlength{\tabcolsep}{3pt}\arrayrulecolor{black!55}\renewcommand{\arraystretch}{1.1}
+\begin{longtable}{|c|p{2.2cm}|p{2.7cm}|p{2.4cm}|p{3.1cm}|c|}
+  \caption{Casos de prueba funcional de la API.}
+  \label{tab:casos}\\ \hline
+  \enc{ID} & \enc{Caso} & \enc{Entrada} & \enc{Esperado} & \enc{Obtenido} & \enc{Estado}\\ \hline
+  \endfirsthead
+  \tablacont{6}\hline
+  \enc{ID} & \enc{Caso} & \enc{Entrada} & \enc{Esperado} & \enc{Obtenido} & \enc{Estado}\\ \hline
+  \endhead
+  \hline\endfoot
+  CP1 & Estado del servicio & \texttt{GET /health} & HTTP 200 y \texttt{OK} & HTTP 200, \texttt{\{"status":"OK"\}} & Pasa\\ \hline
+  CP2 & Variables del modelo & \texttt{GET /features} & 114 variables & HTTP 200, 114 variables & Pasa\\ \hline
+  CP3 & Información de la API & \texttt{GET /info} & HTTP 200 y modelo activo & HTTP 200, modelo Random Forest & Pasa\\ \hline
+  CP4 & Predicción individual & \texttt{POST /predict} con 114 variables & HTTP 200; clase, probabilidad en [0,1] y riesgo & HTTP 200; clase 1, probabilidad 0.437, riesgo MEDIO & Pasa (ver nota)\\ \hline
+  CP5 & Variable faltante & \texttt{POST /predict} con 113 variables & HTTP 400 & HTTP 400 & Pasa\\ \hline
+  CP6 & Variable sobrante & \texttt{POST /predict} con 115 variables & HTTP 400 & HTTP 400 & Pasa\\ \hline
+  CP7 & Cuerpo vacío & \texttt{POST /predict} con \texttt{\{\}} & HTTP 400 & HTTP 400 & Pasa\\ \hline
+  CP8 & Predicción masiva & \texttt{POST /predict-file}, CSV de 50 registros & Archivo \texttt{.xlsx} de 50 filas & HTTP 200; \texttt{.xlsx} de 50 filas & Pasa\\ \hline
+  CP9 & Resumen nacional & \texttt{GET /dashboard} & HTTP 200 con totales del conjunto de prueba & HTTP 200; \num{3699} registros; 912 observados; \num{1887} clasificados (sensibilidad 0.693) & Pasa (ver nota)\\ \hline
+  CP10 & Resumen por provincia & \texttt{GET /dashboard} con provincia Tungurahua & HTTP 200 con totales del conjunto de prueba & HTTP 200; 112 registros; 35 observados; 57 clasificados (sensibilidad 0.686) & Pasa (ver nota)\\ \hline
+  CP11 & Métricas del modelo & \texttt{GET /dashboard/}\allowbreak\texttt{metricas} & Valores de \texttt{metricas\_v2.json} & HTTP 200; valores idénticos & Pasa\\ \hline
+  CP12 & Importancia de variables & \texttt{GET /dashboard/}\allowbreak\texttt{importancia} & HTTP 200 con lista & HTTP 200; lista de variables & Pasa\\ \hline
+  CP13 & Documentación & \texttt{GET /docs} & HTTP 200 & HTTP 200 & Pasa\\ \hline
+  CP14 & Archivo Excel en predicción masiva & \texttt{POST /predict-file} con un \texttt{.xlsx} & Resultado o mensaje de error controlado & HTTP 200; \texttt{.xlsx} de 50 filas. Un Excel dañado, un \texttt{.xls} o un archivo vacío devuelven un mensaje de error & Pasa (ver nota)\\ \hline
+  CP15 & Formulario individual & 512 combinaciones de los 10 datos, resto nulo (formulario corregido) & Probabilidades que varíen según los datos & Entre 0.375 y 0.515; \SI{85.5}{\percent} con clase 1 (la versión inicial: 0.436--0.512, todas con clase 1) & Falla\\ \hline
+  CP16 & Tablero: CSV incompleto & CSV de 5 registros con 100 de 114 columnas & Mensaje claro con columnas faltantes; sin descarga & Mensaje con las columnas faltantes; sin descarga & Pasa\\ \hline
+  CP17 & Tablero: CSV válido & CSV de 50 registros del conjunto de prueba & Descarga de \texttt{.xlsx} de 50 filas & \texttt{resultado\_clasificacion.xlsx} con 50 filas y columnas \texttt{prediccion}, \texttt{probabilidad} y \texttt{riesgo} & Pasa\\ \hline
+\end{longtable}
+\endgroup
+
+\noindent\textbf{Notas.} En CP4, con la versión evaluada inicialmente, la clase asignada (1) y el riesgo (BAJO) no coincidían porque usaban cortes distintos; tras alinear el riesgo con el umbral de 0.42 el caso se volvió a ejecutar y devuelve riesgo MEDIO. Con el servicio corregido, los 50 registros de CP17 son consistentes: 25 con riesgo BAJO (todos clase 0), 21 MEDIO y 4 ALTO (todos clase 1). En la versión evaluada inicialmente, CP9 y CP10 devolvían positivos predichos por el modelo sobre un archivo que incluía los datos de entrenamiento (\num{20510} registros y \num{10626} casos predichos a nivel nacional; 580 registros y 293 casos en Tungurahua), no casos observados. El servicio se corrigió para usar el conjunto de prueba y ambos casos se volvieron a ejecutar: los valores de la tabla son los del servicio corregido y reproducen las métricas de \texttt{metricas\_v2.json} (sensibilidad 0.693 y precisión 0.335). CP14 y CP15 se agregaron al descubrir el comportamiento del servicio de archivos y del formulario. En la versión evaluada inicialmente, CP14 producía una excepción no controlada (\texttt{UnicodeDecodeError}) porque el servicio leía el Excel como CSV; se corrigió (lectura de \texttt{.xlsx} y mensajes de error controlados) y el caso se volvió a ejecutar; CP16 y CP17 verifican la carga de archivos del tablero corregido (Anexo~B).
+
+\noindent\textbf{Resumen.} De los 17 casos, 16 pasan y 1 falla (CP15). Los casos CP1 a CP13 verifican el contrato de la API con datos completos; CP14 verifica el servicio de archivos con Excel (falló en la versión inicial y pasa con el servicio corregido) y CP15 muestra la escasa variación del formulario individual.
+
+\noindent\textbf{Latencia de \texttt{POST /predict}} (100 solicitudes, ejecución local sin red): mediana de 29 ms, percentil 95 de 33 ms y máximo de 38 ms.
+
+\section*{C.1 Ejemplo de solicitud y respuesta (CP4)}
+\begin{lstlisting}[frame=single,basicstyle=\ttfamily\footnotesize]
+Entrada: registro 0 del conjunto de prueba (114 variables)
+Salida : {"prediccion": 1,
+          "descripcion": "Con desnutrición crónica",
+          "probabilidad": 0.437,
+          "riesgo": "MEDIO"}
+Cálculo directo sobre el modelo (sin API): 0.437
+\end{lstlisting}
+
+\section*{C.2 Pruebas automáticas del repositorio}
+\begin{lstlisting}[frame=single,basicstyle=\ttfamily\footnotesize]
+$ python -m pytest -q tests
+......................                          [100%]
+22 passed
+\end{lstlisting}
+
+%% ----------------------------------------------------------------- ANEXO D
+\anexo{D}{Trazabilidad entre Objetivos, Métodos y Resultados}
+
+\begin{table}[H]
+  \caption{Matriz de trazabilidad.}
+  \label{tab:traza}
+  \tablabase\scriptsize
+  \begin{tabular}{|p{2.6cm}|p{3.1cm}|p{3.6cm}|p{3.5cm}|}
+    \hline
+    \enc{Objetivo específico} & \enc{Método (capítulo II)} & \enc{Resultado (capítulo III)} & \enc{Conclusión (capítulo IV)}\\ \hline
+    1. Analizar y preparar los datos & Fases Obtener, Limpiar y Explorar (Tabla~\ref{tab:osemn}) & Tabla~\ref{tab:datos}; corrección de v1 (Tabla~\ref{tab:v1v2}) & Objetivo 1\\ \hline
+    2. Diseñar arquitectura y protocolo & Diseño y requerimientos (Tablas~\ref{tab:rf}, \ref{tab:rnf}) & Tabla~\ref{tab:experimento} & Objetivo 2\\ \hline
+    3. Entrenar, comparar y evaluar & Protocolo experimental y métricas & Tablas~\ref{tab:metricas}, \ref{tab:tung}, \ref{tab:sobreajuste}; Figuras~\ref{fig:comparacion}, \ref{fig:matriz}, \ref{fig:curvas} & Objetivo 3\\ \hline
+    4. Implementar API y tablero & Contrato de la API (Tabla~\ref{tab:api}) & Tabla~\ref{tab:stack}; Anexos A y B & Objetivo 4\\ \hline
+    5. Validar y documentar limitaciones & Pruebas funcionales (Tabla~\ref{tab:tecnicas}) & Anexo C; Tabla~\ref{tab:cumplimiento} & Objetivo 5 y limitaciones\\ \hline
+  \end{tabular}
+\end{table}
+
+\begin{table}[H]
+  \caption{Requerimientos y casos de prueba que los verifican.}
+  \label{tab:req-cp}
+  \tablabase\small
+  \begin{tabular}{|c|p{5.2cm}|p{5.2cm}|}
+    \hline
+    \enc{Requerimiento} & \enc{Evidencia principal} & \enc{Casos de prueba}\\ \hline
+    RF3, RNF1 & Servicio de predicción y validación de entradas & CP4, CP5, CP6, CP7\\ \hline
+    RF4 & Predicción masiva & CP8, CP14, CP16, CP17\\ \hline
+    RF5 & Métricas del modelo & CP11\\ \hline
+    RF6 & Indicadores del tablero & CP9, CP10, CP12\\ \hline
+    RF7 & Documentación interactiva & CP13\\ \hline
+    RNF2 & Rendimiento & Latencia de 100 solicitudes\\ \hline
+    RNF3 & Disponibilidad & CP1, CP3\\ \hline
+    RNF7 & Uso responsable & Revisión de la interfaz en todas las pantallas (Anexo~B)\\ \hline
+  \end{tabular}
+\end{table}
+
+%% ----------------------------------------------------------------- ANEXO E
+\anexo{E}{Repositorio de Versionamiento de Código}
+
+\section*{E.1 Repositorios}
+El código está en un único repositorio consolidado de GitHub, cuya cuenta propietaria es \texttt{8afer99c}: \url{https://github.com/8afer99c/desnutricion_tesis}. Contiene los notebooks originales, el pipeline corregido (\texttt{pipeline\_v2}), la API y el tablero. Se publicaron dos ramas: \texttt{pipeline-v2-fixes} (rama por defecto del repositorio) y \texttt{main} (rama desplegada). El historial de commits conserva la autoría que Git registró en cada commit.
+
+La versión final del tablero corresponde al commit \texttt{b441664} de \texttt{pipeline-v2-fixes} y a su integración en \texttt{main} (commit \texttt{8df0ade}, 20 de septiembre de 2026). El archivo \texttt{metricas\_v2.json} se versionó en \texttt{45928dd} (\texttt{main}) y \texttt{af4fcf4} (\texttt{pipeline-v2-fixes}), y la corrección del nivel de riesgo de la API está en \texttt{588d8fe} (\texttt{main}) y \texttt{7b37205} (\texttt{pipeline-v2-fixes}). El resumen del tablero con el conjunto de prueba (\texttt{data/test\_v2.csv}) está en \texttt{edf40ae} (\texttt{main}) y \texttt{d785b95} (\texttt{pipeline-v2-fixes}). La lectura controlada de CSV y Excel en \texttt{/predict-file} está en \texttt{89a23d5} (\texttt{main}) y \texttt{db5a77f} (\texttt{pipeline-v2-fixes}). Se eliminó el endpoint de depuración \texttt{/api/debug-files} (\texttt{9a30a0d}, \texttt{main}) y se restauró la plantilla \texttt{/api/example} (\texttt{b46738f}, \texttt{main}; prueba de regresión en \texttt{4b2ce05}, \texttt{pipeline-v2-fixes}). Los notebooks y el paquete \texttt{pipeline\_v2} se conservan en el historial hasta el commit \texttt{1b4b767}, ya que desde el commit \texttt{bf27226} la reorganización del repositorio los retiró del árbol de archivos actual; se recuperan con \texttt{git show <commit>:<ruta>}.
+
+\section*{E.2 Reproducción de los resultados}
+Desde la carpeta del proyecto, con Python 3.13 y las versiones de la Tabla~\ref{tab:deps}, el pipeline se ejecuta en este orden:
+\begin{lstlisting}[frame=single,basicstyle=\ttfamily\footnotesize]
+python -m pipeline_v2.build_clean_dataset   # base sin fuga (18 493)
+python -m pipeline_v2.split_dataset         # train_v2 / test_v2
+python -m pipeline_v2.leakage_screen        # revision de fuga
+python -m pipeline_v2.entrenar_modelo       # modelo_v2 y metricas_v2
+python -m pipeline_v2.comparar_v1_v2        # comparacion v1 vs v2
+python -m pipeline_v2.tabla_experimento     # tabla unica del experimento
+\end{lstlisting}
+Los archivos generados quedan en \texttt{pipeline\_v2/output}. Cargar \texttt{modelo\_v2.joblib} requiere la misma versión de scikit-learn con la que se entrenó (1.6.1).
+
+\section*{E.3 Historial de cambios del pipeline corregido}
+\begingroup
+\scriptsize\setlength{\tabcolsep}{3pt}\arrayrulecolor{black!55}\renewcommand{\arraystretch}{1.1}
+\begin{longtable}{|c|c|p{9.8cm}|}
+  \caption{Commits principales del repositorio (ramas \texttt{pipeline-v2-fixes} y \texttt{main}).}
+  \label{tab:commits}\\ \hline
+  \enc{Fecha} & \enc{Commit} & \enc{Descripción}\\ \hline
+  \endfirsthead
+  \tablacont{3}\hline
+  \enc{Fecha} & \enc{Commit} & \enc{Descripción}\\ \hline
+  \endhead
+  \hline\endfoot
+  2026-09-12 & \texttt{7cc7372} & Estructura del paquete \texttt{pipeline\_v2} y entorno de desarrollo\\ \hline
+  2026-09-12 & \texttt{46c702d} & Captura de las métricas base del modelo v1\\ \hline
+  2026-09-12 & \texttt{b00adf2} & Eliminar filas con variable objetivo sin medir en vez de imputarlas\\ \hline
+  2026-09-12 & \texttt{b873079} & Regenerar la partición entrenamiento/prueba limpia y reproducible\\ \hline
+  2026-09-12 & \texttt{d711dab} & Revisión automática de fuga por variable\\ \hline
+  2026-09-13 & \texttt{2a744f9} & Pipeline de entrenamiento: selección real, desbalance, umbral y métricas por clase\\ \hline
+  2026-09-13 & \texttt{f405ca5} & Comparación controlada entre v1 y v2\\ \hline
+  2026-09-13 & \texttt{c03200d} & Reportar sobreajuste e hiperparámetros; aislar el preprocesador\\ \hline
+  2026-09-13 & \texttt{54cd860} & Aviso sobre los números inflados de v1 y tabla del experimento\\ \hline
+  2026-09-13 & \texttt{20f4bde} & Regularizar Random Forest (menor tamaño y sobreajuste)\\ \hline
+  2026-09-13 & \texttt{1b4b767} & Incorporar el código de la API y los notebooks al repositorio consolidado\\ \hline
+  2026-09-13 & \texttt{bf27226} & Interfaz web y arquitectura estructurada\\ \hline
+  2026-09-13 & \texttt{1da04ff} & Variable \texttt{VITE\_API\_URL} para el despliegue en Vercel\\ \hline
+  2026-09-20 & \texttt{b441664} & Interfaz académica exploratoria: aviso, métricas v2, formulario con 114 variables y carga CSV corregidos\\ \hline
+  2026-09-20 & \texttt{8df0ade} & Integración de \texttt{pipeline-v2-fixes} en \texttt{main} y recompilación de la aplicación web (rama \texttt{main})\\ \hline
+  2026-09-20 & \texttt{45928dd}, \texttt{af4fcf4} & Versionar \texttt{metricas\_v2.json} (umbral 0.42 y métricas del modelo v2 en el despliegue)\\ \hline
+  2026-09-20 & \texttt{588d8fe}, \texttt{7b37205} & Nivel de riesgo de la API coherente con el umbral de decisión 0.42 (\texttt{main} y \texttt{pipeline-v2-fixes})\\ \hline
+  2026-09-20 & \texttt{edf40ae}, \texttt{d785b95} & Resumen del tablero con el conjunto de prueba: casos observados y clasificados, sensibilidad y precisión\\ \hline
+  2026-09-20 & \texttt{89a23d5}, \texttt{db5a77f} & Lectura controlada de CSV y Excel en \texttt{/predict-file}, con mensajes de error para archivos inválidos\\ \hline
+  2026-09-20 & \texttt{9a30a0d} & Eliminar el endpoint público de depuración \texttt{/api/debug-files} (\texttt{main})\\ \hline
+  2026-09-20 & \texttt{b46738f}, \texttt{4b2ce05} & Restaurar \texttt{/api/example} y agregar su prueba de regresión\\ \hline
+\end{longtable}
+\endgroup
+
+%% ----------------------------------------------------------------- ANEXO F
+\anexo{F}{Diccionario de las Variables Predictoras}
+
+La Tabla~\ref{tab:diccionario} describe las 114 variables predictoras en el orden de las columnas del conjunto de datos: tipo, porcentaje de valores ausentes en la base original, rango o categorías principales y etiqueta de la pregunta original de la ENSANUT. La variable objetivo es \texttt{desnutricion\_cronica}. Las categorías se muestran tal como figuran en los datos.
+
+\input{anexos/diccionario}
+
+%% ----------------------------------------------------------------- ANEXO G
+\anexo{G}{Perfil de los Datos}
+
+\section*{G.1 Valores nulos}
+La Figura~\ref{fig:nulos} muestra las 25 variables con mayor porcentaje de valores ausentes en la base original (calculado sobre los \num{18493} registros del modelo). De los 114 predictores, 84 tenían algún valor ausente, 32 superaban el \SI{10}{\percent}, 11 el \SI{30}{\percent} y 4 el \SI{50}{\percent}. La base de modelado no contiene nulos: se imputaron en la limpieza inicial, sobre todos los registros y antes de la partición. El notebook \texttt{LIMPIEZA.ipynb}, recuperado del historial del repositorio (commit \texttt{1b4b767}), muestra la regla: moda para las variables categóricas y mediana para las numéricas, calculadas sobre la base completa. Ese notebook imputaba también con la mediana la variable objetivo, el factor de expansión y el estrato; el pipeline corregido elimina, en lugar de imputar, los registros con variable objetivo sin medir. El Anexo~F indica el porcentaje original de nulos de cada variable.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.8\textwidth]{figuras/anexo-nulos.png}
+  \caption{Variables predictoras con mayor porcentaje de valores ausentes en la base original. Elaboración propia.}
+  \label{fig:nulos}
+\end{figure}
+
+\section*{G.2 Distribución de variables numéricas}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figuras/anexo-histogramas.png}
+  \caption{Histogramas de variables numéricas seleccionadas (sin el 0.5\,\% de valores extremos en cada cola). Elaboración propia.}
+  \label{fig:histogramas}
+\end{figure}
+
+\section*{G.3 Prevalencia por categoría}
+La Figura~\ref{fig:prevcat} muestra la prevalencia muestral de desnutrición crónica según variables categóricas seleccionadas (categorías con al menos 30 registros; la línea roja indica la prevalencia global de \SI{24.7}{\percent}) y la Tabla~\ref{tab:prevcat} los valores. Son prevalencias sin ponderar y asociaciones descriptivas, no efectos causales.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figuras/anexo-prevalencia-categorias.png}
+  \caption{Prevalencia muestral de desnutrición crónica por categoría. Elaboración propia.}
+  \label{fig:prevcat}
+\end{figure}
+
+\input{anexos/gen-prevcat}
+
+%% ----------------------------------------------------------------- ANEXO H
+\anexo{H}{Resultados Ampliados}
+
+\section*{H.1 Modelos base: matrices de confusión}
+\input{anexos/gen-confusion4}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figuras/anexo-curvas-4modelos.png}
+  \caption{Curvas ROC y de precisión--sensibilidad de los cuatro modelos base en el conjunto de prueba. Elaboración propia.}
+  \label{fig:curvas4}
+\end{figure}
+
+\section*{H.2 Sensibilidad al umbral}
+\input{anexos/gen-umbrales}
+
+\section*{H.3 Calibración}
+\input{anexos/gen-calib}
+
+\section*{H.4 Desempeño por subgrupos (detalle)}
+\input{anexos/gen-subgrupos}
+
+\section*{H.5 Hiperparámetros del modelo final}
+\input{anexos/gen-hiperparametros}
+
+\section*{H.6 Importancia de variables (30 principales)}
+\input{anexos/gen-top30}
+
+%% ----------------------------------------------------------------- ANEXO I
+\anexo{I}{Código Esencial}
+
+Se incluye el código esencial del pipeline y del servicio. El resto está en el repositorio (Anexo~E). Los comentarios conservan la redacción original del código.
+
+\section*{I.1 Construcción de la base sin fuga (\texttt{build\_clean\_dataset.py})}
+\lstinputlisting[language=Python,basicstyle=\ttfamily\scriptsize,frame=single]{anexos/codigo/build_clean_dataset.py}
+
+\section*{I.2 Partición reproducible (\texttt{split\_dataset.py})}
+\lstinputlisting[language=Python,basicstyle=\ttfamily\scriptsize,frame=single]{anexos/codigo/split_dataset.py}
+
+\section*{I.3 Revisión de fuga por variable (\texttt{leakage\_screen.py})}
+\lstinputlisting[language=Python,basicstyle=\ttfamily\scriptsize,frame=single]{anexos/codigo/leakage_screen.py}
+
+\section*{I.4 Preprocesamiento, modelos, umbral y evaluación (\texttt{entrenar\_modelo.py}, extracto)}
+\lstinputlisting[language=Python,basicstyle=\ttfamily\scriptsize,frame=single]{anexos/codigo/entrenar_extracto.py}
+
+\section*{I.5 Servicio de predicción (\texttt{predictor.py})}
+\lstinputlisting[language=Python,basicstyle=\ttfamily\scriptsize,frame=single]{anexos/codigo/predictor.py}
+
+\section*{I.6 Ruta de predicción individual (\texttt{main.py}, extracto)}
+\lstinputlisting[language=Python,basicstyle=\ttfamily\scriptsize,frame=single]{anexos/codigo/main_predict.py}
+
+\section*{I.7 Nivel de riesgo (\texttt{config.py}, extracto)}
+\lstinputlisting[language=Python,basicstyle=\ttfamily\scriptsize,frame=single]{anexos/codigo/config_riesgo.py}

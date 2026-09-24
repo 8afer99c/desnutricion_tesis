@@ -1,0 +1,45 @@
+\subsection{Criterios de selección y documentos excluidos}
+La Tabla~\ref{tab:criterios} resume los criterios aplicados. La revisión se hizo sobre 15 documentos disponibles a texto completo; 10 cumplieron los criterios y se incluyeron en la Tabla~\ref{tab:estado-arte}. La Figura~\ref{fig:seleccion} muestra el flujo y la Tabla~\ref{tab:excluidos} los motivos de exclusión. No se registró el número de resultados devueltos por cada base de búsqueda, por lo que el flujo parte de los documentos ya reunidos y no constituye una revisión sistemática formal.
+
+\begin{table}[H]
+  \caption{Criterios de inclusión y exclusión.}
+  \label{tab:criterios}
+  \tablabase\small
+  \begin{tabular}{|p{2.6cm}|p{5.6cm}|p{5.4cm}|}
+    \hline
+    \enc{Aspecto} & \enc{Inclusión} & \enc{Exclusión}\\ \hline
+    Tema & Aplicación de ML a estado nutricional infantil, o contexto nutricional de Ecuador & Evaluación nutricional sin ML; temas ajenos a nutrición infantil\\ \hline
+    Periodo & Publicaciones de 2019 a 2026 & Anteriores a 2019\\ \hline
+    Idioma y acceso & Español o inglés; texto completo disponible & Sin texto completo\\ \hline
+    Contenido mínimo & Población o fuente de datos, método y algún resultado o limitación & No reporta población, método o resultados\\ \hline
+  \end{tabular}
+\end{table}
+
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}[font=\footnotesize, node distance=6mm,
+    caja/.style={draw=black!60, rounded corners=2pt, align=center, text width=4.4cm, minimum height=1.3cm, fill=white},
+    flecha/.style={-{Stealth[length=2mm]}, black!60}]
+    \node[caja] (a) {\textbf{Documentos reunidos}\\ 15 a texto completo};
+    \node[caja, right=12mm of a] (b) {\textbf{Incluidos}\\ 10 en la Tabla~\ref{tab:estado-arte}};
+    \node[caja, below=8mm of b] (c) {\textbf{Excluidos}\\ 5, con motivo en la Tabla~\ref{tab:excluidos}};
+    \draw[flecha] (a) -- (b); \draw[flecha] (a.south) |- (c.west);
+  \end{tikzpicture}
+  \caption{Flujo de selección de los documentos revisados. Elaboración propia.}
+  \label{fig:seleccion}
+\end{figure}
+
+\begin{table}[H]
+  \caption{Documentos no incluidos en la comparación y motivo.}
+  \label{tab:excluidos}
+  \tablabase\small
+  \begin{tabular}{|p{4.9cm}|p{8.7cm}|}
+    \hline
+    \enc{Documento} & \enc{Motivo de exclusión}\\ \hline
+    Revisión narrativa sobre el modelo ABCDEFG de evaluación nutricional \cite{app16020845} & Evaluación nutricional clínica sin modelos de ML\\ \hline
+    Comparación de métodos de evaluación nutricional del recién nacido \cite{nu17101642} & Neonatos y métodos antropométricos, sin ML\\ \hline
+    Efecto de la austeridad sobre los niños en países de ingresos bajos y medios \cite{DAOUD2024102973} & Objetivo económico y de inferencia causal, no de clasificación nutricional\\ \hline
+    Minería de datos y ML en diagnóstico clínico \cite{Saberi-Karimian19052021} & Enfoque clínico general, sin población infantil ni indicador nutricional\\ \hline
+    Diagnóstico de malnutrición en preescolares con ML \cite{shindediagnosing} & Revisión sin población, métricas ni limitaciones comparables; se usa solo como contexto\\ \hline
+  \end{tabular}
+\end{table}
